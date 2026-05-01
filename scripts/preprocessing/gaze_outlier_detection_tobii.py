@@ -8,8 +8,8 @@ arctan model used for Neon. Outputs per-run CSV of outlier trial indices
 and PNG/PDF/SVG diagnostic figures matching the manuscript figure style.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 import os
@@ -21,9 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from scipy.signal import butter, filtfilt
 
-# ============================================================
 # CONFIGURATION
-# ============================================================
 
 SUBJECTS = ["01"]
 
@@ -79,7 +77,7 @@ OUTLIER_PARAMS = {
 }
 WINDOW_SEC = 1.0  # sub-window size for outlier check
 
-# ---- Publication style (from table_maker_scatter_overt_only_pub_latency_CI.py) ----
+# Publication style (from table_maker_scatter_overt_only_pub_latency_CI.py)
 AXIS_LABEL_FONT  = 18
 AXIS_TICK_FONT   = 15
 LEGEND_FONT      = 13
@@ -97,9 +95,7 @@ plt.rcParams.update({
     "ytick.major.size":  6,
 })
 
-# ============================================================
 # HELPERS
-# ============================================================
 
 def preprocess_gaze(timestamps, raw_gaze, fs=SAMPLING_RATE, cutoff=LP_CUTOFF,
                     order=LP_ORDER):
@@ -193,9 +189,7 @@ def detect_outlier(epoch, side, params, fs=SAMPLING_RATE):
 
 
 
-# ============================================================
 # MAIN PROCESSING
-# ============================================================
 
 def process_run(subj, task, run_num):
     """Process one run: detect outliers, save results + pub-quality figures."""
@@ -212,7 +206,7 @@ def process_run(subj, task, run_num):
         print(f"  [SKIP] Missing events: {events_tsv}")
         return None
 
-    # ---- Load ----
+    # Load
     df_physio = pd.read_csv(physio_tsv, sep="\t")
     df_events = pd.read_csv(events_tsv, sep="\t")
 
@@ -230,17 +224,17 @@ def process_run(subj, task, run_num):
 
     print(f"  {len(onsets)} trials ({left_mask.sum()} left, {right_mask.sum()} right)")
 
-    # ---- Preprocess ----
+    # Preprocess
     t_u, gaze_filt = preprocess_gaze(timestamps, gaze_x_raw)
 
-    # ---- Baseline-correct using the MATLAB ordering ----
+    # Baseline-correct using the MATLAB ordering
     left_onsets = onsets[left_mask]
     baseline = compute_baseline(t_u, gaze_filt, left_onsets)
     gaze_deg = (gaze_filt - baseline) * FOV_X
     print(f"  Baseline: {baseline:.6f} (normalized units)")
 
 
-    # ---- Get task-specific outlier params ----
+    # Get task-specific outlier params
     task_key = task.lower().replace("control", "control")
     # Handle combined tasks like "overtcontrol"
     for key in OUTLIER_PARAMS:
@@ -252,7 +246,7 @@ def process_run(subj, task, run_num):
         task_key = "overt"
     params = OUTLIER_PARAMS[task_key]
 
-    # ---- Epoch & detect outliers ----
+    # Epoch & detect outliers
     trial_indices = np.arange(1, len(onsets) + 1)
     outlier_indices = []
     epochs_left  = []
@@ -276,7 +270,7 @@ def process_run(subj, task, run_num):
     n_outliers = len(outlier_indices)
     print(f"  Outliers: {n_outliers}/{len(onsets)}  indices={outlier_indices}")
 
-    # ---- Publication figure ----
+    # Publication figure
     plot_pre  = 0.0
     plot_post = 6.0
     pre_skip  = 0
@@ -331,7 +325,7 @@ def process_run(subj, task, run_num):
 
     fig.tight_layout()
 
-    # ---- Save ----
+    # Save
     subj_out = os.path.join(OUT_BASE, f"sub-{subj}")
     os.makedirs(subj_out, exist_ok=True)
 
@@ -352,7 +346,7 @@ def process_run(subj, task, run_num):
     print(f"  Saved: {fig_pdf}")
     print(f"  Saved: {fig_svg}")
 
-    # ---- CSV results ----
+    # CSV results
     result = {
         "Subject": subj,
         "Task": task,
@@ -374,7 +368,6 @@ def process_run(subj, task, run_num):
     return result
 
 
-# ============================================================
 if __name__ == "__main__":
     all_results = []
 

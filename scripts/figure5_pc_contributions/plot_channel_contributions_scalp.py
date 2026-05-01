@@ -10,8 +10,8 @@ across outer folds, attaches channel geometry from the subject SNIRF file,
 and renders the scalp plot.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 
@@ -47,7 +47,7 @@ from cedalion import units
 warnings.filterwarnings('ignore')
 
 
-# === Load contribution data ===
+# Load contribution data
 def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: str):
     """
     Load overall channel importance per fold for a subject-condition.
@@ -63,7 +63,7 @@ def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: st
     json_path = os.path.join(base_dir, sub_folder, 'dprime_pca_summary.json')
     
     if not os.path.exists(json_path):
-        print(f"✗ Missing: {json_path}")
+        print(f" Missing: {json_path}")
         return [], {}
     
     try:
@@ -87,11 +87,11 @@ def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: st
             'n_outer_folds': len(folds),
         }
         
-        print(f"✓ Loaded {len(folds)} folds for sub-{subject_id} {condition}")
+        print(f" Loaded {len(folds)} folds for sub-{subject_id} {condition}")
         return folds, meta
         
     except Exception as e:
-        print(f"✗ Error reading {json_path}: {e}")
+        print(f" Error reading {json_path}: {e}")
         return [], {}
 
 
@@ -133,7 +133,7 @@ def get_channel_contrib_per_subject(fold_channel_maps):
     return df
 
 
-# === Load SNIRF for geometry (EXACT COPY from motion_inspector_slope.py) ===
+# Load SNIRF for geometry (EXACT COPY from motion_inspector_slope.py)
 def load_snirf_for_geometry(subject_id: str, condition: str, master_data_dir: str):
     """
     Load SNIRF file to get rec and geo3d for plotting.
@@ -158,10 +158,10 @@ def load_snirf_for_geometry(subject_id: str, condition: str, master_data_dir: st
     snirf_path = os.path.join(master_data_dir, f"sub-{subject_id}", "nirs", snirf_filename)
     
     if not os.path.exists(snirf_path):
-        print(f"✗ SNIRF not found: {snirf_path}")
+        print(f" SNIRF not found: {snirf_path}")
         return None
     
-    print(f"✓ Loading SNIRF for geometry: {snirf_filename}")
+    print(f" Loading SNIRF for geometry: {snirf_filename}")
     
     try:
         # Load data using cedalion (same as motion_inspector)
@@ -170,17 +170,17 @@ def load_snirf_for_geometry(subject_id: str, condition: str, master_data_dir: st
         
         # Check if geo3d exists
         if not hasattr(rec, 'geo3d') or rec.geo3d is None:
-            print(f"⚠️ Warning: No geo3d found in SNIRF file")
+            print(f" Warning: No geo3d found in SNIRF file")
             return None
         
         return rec
         
     except Exception as e:
-        print(f"✗ Error loading SNIRF: {e}")
+        print(f" Error loading SNIRF: {e}")
         return None
 
 
-# === Map contributions to channel structure ===
+# Map contributions to channel structure
 def map_contributions_to_channels(channel_contrib_df, rec):
     """
     Map channel contributions from JSON to SNIRF channel structure.
@@ -213,7 +213,7 @@ def map_contributions_to_channels(channel_contrib_df, rec):
         elif hasattr(rec, 'amp') and rec.amp is not None:
             rec_channels = rec.amp.channel
         else:
-            print("⚠️ Could not find channel structure in rec")
+            print(" Could not find channel structure in rec")
             print(f"  Available attributes: {[attr for attr in dir(rec) if not attr.startswith('_')]}")
             return None
         
@@ -273,16 +273,16 @@ def map_contributions_to_channels(channel_contrib_df, rec):
         )
         
         n_matched = np.sum(contrib_values > 0)
-        print(f"✓ Matched {n_matched}/{len(channel_contrib_df)} channels to SNIRF structure")
+        print(f" Matched {n_matched}/{len(channel_contrib_df)} channels to SNIRF structure")
         
         return contrib_da
         
     except Exception as e:
-        print(f"✗ Error mapping contributions: {e}")
+        print(f" Error mapping contributions: {e}")
         return None
 
 
-# === Plotting function (ADAPTED from motion_inspector_slope.py) ===
+# Plotting function (ADAPTED from motion_inspector_slope.py)
 def plot_channel_contributions_scalp(contrib_da, rec, subject_id, condition, output_base_dir):
     """
     Plot channel contributions on 2D scalp plot.
@@ -363,21 +363,21 @@ def plot_channel_contributions_scalp(contrib_da, rec, subject_id, condition, out
     for ext in ('png', 'svg', 'pdf'):
         output_file = os.path.join(output_dir, f"{base_name}.{ext}")
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        print(f"✓ Saved: {output_file}")
+        print(f" Saved: {output_file}")
     plt.close()
     print(f"  Max contribution (raw): {raw_max:.2f}%  →  vmax set to {vmax_contrib}")
 
 
-# === ROI helper functions (from analyze_pc_contributions_group_roi.py) ===
+# ROI helper functions (from analyze_pc_contributions_group_roi.py)
 def load_roi_mapping(roi_csv_path: str) -> dict:
     """Load ROI mapping CSV into dict channel_label -> brodmann."""
     try:
         roi_df = pd.read_csv(roi_csv_path)
         roi_dict = dict(zip(roi_df['channel_label'], roi_df['brodmann']))
-        print(f"✓ Loaded ROI mapping for {len(roi_dict)} channels")
+        print(f" Loaded ROI mapping for {len(roi_dict)} channels")
         return roi_dict
     except Exception as e:
-        print(f"⚠️ Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
+        print(f" Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
         return {}
 
 
@@ -398,7 +398,7 @@ def get_display_name(channel_name: str, roi_mapping: dict) -> str:
     return channel_name
 
 
-# === Group-level ROI plotting ===
+# Group-level ROI plotting
 def map_roi_values_to_channels(rec, roi_mapping: dict, roi_values_df: pd.DataFrame, value_column: str):
     """
     Map ROI-level values to individual channels.
@@ -426,7 +426,7 @@ def map_roi_values_to_channels(rec, roi_mapping: dict, roi_values_df: pd.DataFra
             amp_data = rec.timeseries['amp']
             rec_channels = amp_data.channel
         else:
-            print("⚠️ Could not find channel structure in rec")
+            print(" Could not find channel structure in rec")
             return None
         
         n_channels = len(rec_channels)
@@ -477,7 +477,7 @@ def map_roi_values_to_channels(rec, roi_mapping: dict, roi_values_df: pd.DataFra
         return values_da
         
     except Exception as e:
-        print(f"✗ Error mapping ROI values to channels: {e}")
+        print(f" Error mapping ROI values to channels: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -522,7 +522,7 @@ def plot_group_roi_contributions_scalp(roi_group_df: pd.DataFrame, rec, conditio
     freq_da = map_roi_values_to_channels(rec, roi_mapping, roi_group_df, 'subject_frequency')
     
     if contrib_da is None or freq_da is None:
-        print("⚠️ Could not create group plot - mapping failed")
+        print(" Could not create group plot - mapping failed")
         return
     
     # Setup figure - horizontal layout (1 row, 2 cols)
@@ -599,13 +599,13 @@ def plot_group_roi_contributions_scalp(roi_group_df: pd.DataFrame, rec, conditio
     for ext in ('png', 'svg', 'pdf'):
         output_file = os.path.join(output_dir, f"{base_name}.{ext}")
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        print(f"✓ Saved group plot: {output_file}")
+        print(f" Saved group plot: {output_file}")
     plt.close()
     print(f"  Max ROI contribution (raw): {raw_max_contrib:.2f}%  →  vmax set to {vmax_contrib}")
     print(f"  ROIs plotted: {len(roi_group_df)}")
 
 
-# === Main execution ===
+# Main execution
 def main():
     """Main function to generate scalp plots for all subjects and conditions."""
     
@@ -630,13 +630,13 @@ def main():
     print(f"\nLoading shared geometry from sub-{subjects[0]} {conditions[0]}...")
     rec = load_snirf_for_geometry(subjects[0], conditions[0], master_data_dir)
     if rec is None:
-        print("✗ Could not load reference SNIRF. Aborting.")
+        print(" Could not load reference SNIRF. Aborting.")
         return
 
     total_plots = 0
     failed_plots = 0
 
-    # === PART 1: Individual subject plots ===
+    # PART 1: Individual subject plots
     for condition in conditions:
         print(f"\n{'='*80}")
         print(f"CONDITION: {condition.upper()}")
@@ -649,14 +649,14 @@ def main():
                 # 1. Load contribution data
                 folds, meta = load_subject_condition_contrib(base_dir, subject_id, condition)
                 if not folds:
-                    print(f"⚠️ Skipping sub-{subject_id} {condition}: No contribution data")
+                    print(f" Skipping sub-{subject_id} {condition}: No contribution data")
                     failed_plots += 1
                     continue
 
                 # 2. Average across folds
                 channel_contrib_df = get_channel_contrib_per_subject(folds)
                 if channel_contrib_df.empty:
-                    print(f"⚠️ Skipping sub-{subject_id} {condition}: No channel data")
+                    print(f" Skipping sub-{subject_id} {condition}: No channel data")
                     failed_plots += 1
                     continue
 
@@ -667,7 +667,7 @@ def main():
                 # 3. Map contributions to channel structure (reuse shared rec)
                 contrib_da = map_contributions_to_channels(channel_contrib_df, rec)
                 if contrib_da is None:
-                    print(f"⚠️ Skipping sub-{subject_id} {condition}: Could not map channels")
+                    print(f" Skipping sub-{subject_id} {condition}: Could not map channels")
                     failed_plots += 1
                     continue
 
@@ -676,13 +676,13 @@ def main():
                 total_plots += 1
 
             except Exception as e:
-                print(f"✗ Error processing sub-{subject_id} {condition}: {e}")
+                print(f" Error processing sub-{subject_id} {condition}: {e}")
                 import traceback
                 traceback.print_exc()
                 failed_plots += 1
                 continue
 
-    # === PART 2: Group-level ROI plots ===
+    # PART 2: Group-level ROI plots
     print("\n" + "="*80)
     print("GENERATING GROUP-LEVEL ROI PLOTS")
     print("="*80)
@@ -690,7 +690,7 @@ def main():
     # Load ROI mapping
     roi_mapping = load_roi_mapping(roi_csv_path)
     if not roi_mapping:
-        print("⚠️ Warning: No ROI mapping loaded, skipping group plots")
+        print(" Warning: No ROI mapping loaded, skipping group plots")
     else:
         for condition in conditions:
             try:
@@ -701,13 +701,13 @@ def main():
                                             'roi_contrib_group_summary.csv')
 
                 if not os.path.exists(group_roi_csv):
-                    print(f"⚠️ Group ROI CSV not found: {group_roi_csv}")
+                    print(f" Group ROI CSV not found: {group_roi_csv}")
                     print(f"   Please run analyze_pc_contributions_group_roi.py first")
                     continue
 
                 # Load group ROI data
                 roi_group_df = pd.read_csv(group_roi_csv)
-                print(f"✓ Loaded group ROI data: {len(roi_group_df)} ROIs")
+                print(f" Loaded group ROI data: {len(roi_group_df)} ROIs")
 
                 # Generate group plot (reuse shared rec for geometry)
                 plot_group_roi_contributions_scalp(roi_group_df, rec, condition,
@@ -715,7 +715,7 @@ def main():
                 total_plots += 1
 
             except Exception as e:
-                print(f"✗ Error creating group plot for {condition}: {e}")
+                print(f" Error creating group plot for {condition}: {e}")
                 import traceback
                 traceback.print_exc()
                 continue
@@ -727,7 +727,7 @@ def main():
     print(f"Total plots generated: {total_plots}")
     print(f"Failed plots: {failed_plots}")
     print(f"Output directory: {output_base_dir}")
-    print("\n✅ Done!")
+    print("\n Done!")
 
 
 if __name__ == '__main__':
@@ -780,7 +780,7 @@ if __name__ == '__main__':
         # 5. Plot and save
         plot_channel_contributions_scalp(contrib_da, rec, subject_id, condition, output_base_dir)
         
-        print("\n✅ Test completed successfully!")
+        print("\n Test completed successfully!")
         
     elif len(sys.argv) > 1 and sys.argv[1] == '--test-group':
         # Test group-level plot only
@@ -812,7 +812,7 @@ if __name__ == '__main__':
             sys.exit(1)
         
         roi_group_df = pd.read_csv(group_roi_csv)
-        print(f"✓ Loaded group ROI data: {len(roi_group_df)} ROIs")
+        print(f" Loaded group ROI data: {len(roi_group_df)} ROIs")
         
         # Load reference SNIRF
         ref_rec = load_snirf_for_geometry(ref_subject, condition, master_data_dir)
@@ -824,7 +824,7 @@ if __name__ == '__main__':
         plot_group_roi_contributions_scalp(roi_group_df, ref_rec, condition, 
                                           roi_mapping, output_base_dir)
         
-        print("\n✅ Group test completed successfully!")
+        print("\n Group test completed successfully!")
         
     else:
         # Run full analysis

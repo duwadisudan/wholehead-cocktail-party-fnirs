@@ -7,8 +7,8 @@ performs paired statistical comparison across subjects, and produces the
 pairwise scatter / line figure.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 from whichscript import configure, enable_auto_logging
@@ -88,7 +88,7 @@ def create_visualization(overt, covert, pairwise_result):
     """
     import matplotlib as mpl
 
-    # ── Font size constants (matched to reference figure) ──────────────
+    # Font size constants (matched to reference figure)
     BASE_FONT_SIZE = 16
     AXIS_LABEL_FONT = 18
     AXIS_TICK_FONT = 15
@@ -116,10 +116,10 @@ def create_visualization(overt, covert, pairwise_result):
     c_covert = '#D65F5F'  # muted red
     c_mean = '#222222'
 
-    # ── Figure ──────────────────────────────────────────────────────────
+    # Figure
     fig, ax = plt.subplots(figsize=(7, 6))
 
-    # ── Paired slopegraph ───────────────────────────────────────────────
+    # Paired slopegraph
     jitter = 0.03
     for i in range(n):
         ax.plot(

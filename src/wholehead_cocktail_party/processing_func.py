@@ -115,7 +115,7 @@ def preprocess(rec, cfg_preprocess):
     # Check if TDDR is enabled
     do_tddr = cfg_preprocess["cfg_motion_correct"]["flag_do_tddr"]
     
-    # ===== STEP 1: Convert to OD =====
+    # STEP 1: Convert to OD
     rec["od_o"] = cedalion.nirs.int2od(rec['amp'])
     rec["od_p"] = cedalion.nirs.int2od(rec['amp_pruned'])
     
@@ -123,7 +123,7 @@ def preprocess(rec, cfg_preprocess):
     rec['od_o'].time.attrs['units'] = units.s
     rec['od_p'].time.attrs['units'] = units.s
     
-    # ===== STEP 2: Bandpass filter =====
+    # STEP 2: Bandpass filter
     rec["od_o_filt"] = cedalion.sigproc.frequency.freq_filter(
         rec["od_o"],
         cfg_preprocess['cfg_bandpass']['fmin'],
@@ -134,7 +134,7 @@ def preprocess(rec, cfg_preprocess):
         cfg_preprocess['cfg_bandpass']['fmin'],
         cfg_preprocess['cfg_bandpass']['fmax'])
     
-    # ===== STEP 3: Apply TDDR (only if enabled) =====
+    # STEP 3: Apply TDDR (only if enabled)
     if do_tddr:
         # Apply TDDR to raw OD
         rec["od_o_tddr"] = motion.tddr(rec["od_o"])
@@ -159,11 +159,11 @@ def preprocess(rec, cfg_preprocess):
         rec['conc_o_tddr_filt'] = cedalion.nirs.od2conc(rec['od_o_tddr_filt'], rec.geo3d, dpf)
         rec['conc_p_tddr_filt'] = cedalion.nirs.od2conc(rec['od_p_tddr_filt'], rec.geo3d, dpf)
     
-    # ===== STEP 4: Convert filtered data to concentration =====
+    # STEP 4: Convert filtered data to concentration
     rec['conc_o_filt'] = cedalion.nirs.od2conc(rec['od_o_filt'], rec.geo3d, dpf)
     rec['conc_p_filt'] = cedalion.nirs.od2conc(rec['od_p_filt'], rec.geo3d, dpf)
     
-    # ===== STEP 5: Apply GLM (if enabled) =====
+    # STEP 5: Apply GLM (if enabled)
     if cfg_preprocess['cfg_GLM'] is not None:
         if do_tddr:
             # Apply GLM to TDDR-processed concentration data
@@ -182,7 +182,7 @@ def preprocess(rec, cfg_preprocess):
             rec['od_o_filt_postglm'] = cedalion.nirs.conc2od(rec['conc_o_filt_postglm'], rec.geo3d, dpf)
             rec['od_p_filt_postglm'] = cedalion.nirs.conc2od(rec['conc_p_filt_postglm'], rec.geo3d, dpf)
     
-    # ===== STEP 6: Store concentration data in timeseries =====
+    # STEP 6: Store concentration data in timeseries
     # Always store the non-TDDR filtered concentration data
     rec.timeseries['conc_o_filt'] = rec['conc_o_filt']
     rec.timeseries['conc_p_filt'] = rec['conc_p_filt']

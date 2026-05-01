@@ -10,8 +10,8 @@ depth. Outputs per-fold accuracies, channel importances, and PC summaries
 consumed by the figure-generating scripts.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%% Imports
@@ -52,7 +52,6 @@ from sklearn.decomposition import PCA
 from scipy.ndimage import uniform_filter1d
 
 #%% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
 rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
@@ -60,8 +59,8 @@ flag_save_preprocessed_data = False
 flag_run_type = 'covert' # 'overt' or 'covert'f
 
 # DEBUG: Print to confirm what flag_run_type is being used
-print(f"🔍 DEBUG: flag_run_type is set to: '{flag_run_type}'")
-print(f"🔍 DEBUG: This should create folders like: sub_XX_{flag_run_type}")
+print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
+print(f" DEBUG: This should create folders like: sub_XX_{flag_run_type}")
 
 if flag_run_type.lower() == 'overt': 
     selected_file_ids = ['overt_run-01','overt_run-02']
@@ -88,7 +87,7 @@ cfg_dataset['filenm_lst'] = [
     ]
 
 
-# ── Trial-quality filtering via augmented events ──────────────────────
+# Trial-quality filtering via augmented events
 # Augmented events TSVs live in each subject's nirs/ folder.
 # The 'include' column (1 = good trial) is used to drop bad trials.
 flag_filter_trials = True   # set False to skip trial filtering entirely
@@ -201,7 +200,6 @@ cfg_blockavg = {
 cfg_erbmICA = {}
 
 #%% Load and preprocess the data
-##############################################################################
 
 # Load and preprocess the data
 #
@@ -284,9 +282,9 @@ def load_all_subjects(subj_ids, run_type, data_dir):
                 rec.append(pickle.load(f))
             with open(prune_file, 'rb') as f:
                 chs_pruned_subjs.append(pickle.load(f))
-            print(f"✓ Loaded subject {subj_id}")
+            print(f" Loaded subject {subj_id}")
         else:
-            print(f"⚠ Warning: Subject {subj_id} not found, skipping")
+            print(f" Warning: Subject {subj_id} not found, skipping")
             rec.append(None)
             chs_pruned_subjs.append(None)
     
@@ -319,7 +317,7 @@ if not flag_load_preprocessed_data:
                 pickle.dump(chs_pruned_subjs[subj_idx], f, protocol=pickle.HIGHEST_PROTOCOL)
             os.replace(prune_tmp, prune_file)
             
-            print(f"✓ Saved subject {subj_id}")
+            print(f" Saved subject {subj_id}")
         
         print(f"All subjects saved to: {outdir}")
         
@@ -374,7 +372,7 @@ def fit_glm_excluding_test(
 
     dm_masked = dm_full.copy(deep=True)
 
-    # ---- helper to get plain seconds ----------------------------------
+    # helper to get plain seconds
     def _to_s(coord):
         try:
             return coord.pint.to("s").values.astype(float)
@@ -384,7 +382,7 @@ def fit_glm_excluding_test(
     t_sec = _to_s(dm_masked.time)
     o_sec = _to_s(test_stim.onset)
 
-    # ---- build Boolean mask ------------------------------------------
+    # build Boolean mask
     rows = np.zeros_like(t_sec, bool)
     if method.lower() == "block":
         rows |= (t_sec >= o_sec.min() - before_s) & (t_sec <= o_sec.max() + after_s)
@@ -399,7 +397,7 @@ def fit_glm_excluding_test(
         aux_masked.values[rows, ...] = 0          # <-- add this line
     else:
         aux_masked = None
-    # ---- fit GLM ------------------------------------------------------
+    # fit GLM
     betas = glm.fit(
         ts,               # (channel, chromo, time)
         dm_masked,        # (time,    regressor, chromo)
@@ -561,7 +559,7 @@ def extract_single_trial_ts_two_regressors(
 
     seg_len = hrfL.sizes["time"]
 
-    # --- compute dt in seconds correctly for both timedelta and float64 times ---
+    # compute dt in seconds correctly for both timedelta and float64 times
     if np.issubdtype(times.dtype, np.timedelta64):
         dt = (times[1] - times[0]) / np.timedelta64(1, "s")
         dt = float(dt)
@@ -700,12 +698,12 @@ def sliding_window_classify(
             X_te_t = pca.transform(X_te_t)
         for name, clf in classifiers.items():
             clf.fit(X_tr_t, labels_train)
-            # --- Test accuracy ---
+            # Test accuracy
             y_pred = clf.predict(X_te_t)
             acc[name][w] = accuracy_score(labels_test, y_pred)
             bal_acc[name][w] = balanced_accuracy_score(labels_test, y_pred)
             preds_all[name].append(y_pred.copy())
-            # --- Training accuracy (OOB if available, else re-substitution) ---
+            # Training accuracy (OOB if available, else re-substitution)
             if hasattr(clf, 'oob_score_'):
                 train_acc[name][w] = clf.oob_score_
                 # Compute OOB balanced accuracy from OOB decision function
@@ -749,7 +747,7 @@ def fit_pca_from_moving_windows(ts_train, window_size, step_size, *, mode='varia
     pca.fit(X_scaled)
     return scaler, pca
 
-# --- New PCA helpers (timecourse-first) ---
+# New PCA helpers (timecourse-first)
 
 def fit_pca_on_full_timecourse(ts_train, *, n_components=20, scale=True):
     """Fit PCA on stacked timecourses (n_trials, n_channels, T) -> (n_trials*T, n_channels)."""
@@ -830,7 +828,7 @@ def good_channels(trials, labels, N, windowStartT, windowEndT, fs):
 # REMOVE MLflow configuration - using traditional file outputs only
 
 
-# ── global hyper-parameters ──────────────────────────────────────────
+# global hyper-parameters
 EPS_STOP          = 0.005   # 0.5-pp absolute accuracy threshold
 TOP_N_POOL        = 20
 INNER_SPLITS      = 3
@@ -901,9 +899,8 @@ def greedy_select(X_tr, y_tr, X_va, y_va,
             break
 
     return chosen, history
-# -------------------------------------------------------------------- #
 
-# ── Epoch-overlap diagnostic ─────────────────────────────────────────
+# Epoch-overlap diagnostic
 def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
                         verbose=True):
     """Detect temporal overlap between train and test epochs.
@@ -955,7 +952,7 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
     }
 
     if verbose and len(overlaps) > 0:
-        print(f"    ⚠ OVERLAP: {len(overlaps)} train-test epoch pairs share samples "
+        print(f"     OVERLAP: {len(overlaps)} train-test epoch pairs share samples "
               f"(out of {len(train_epochs)}×{len(test_epochs)} possible)")
         # summarize per-test-trial
         test_with_overlap = set((r, i) for _, _, r, i, _ in overlaps)
@@ -970,7 +967,6 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
 
 
 
-# ======================================================================
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 # define your classifiers once
@@ -1011,7 +1007,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     run1_full  = rec[subj_idx][0]
     run2_full  = rec[subj_idx][1]
 
-    # ── Filter trials using augmented events 'include' column ──────────
+    # Filter trials using augmented events 'include' column
     if flag_filter_trials:
         for run_idx, (run_obj, fid) in enumerate(
                 zip([run1_full, run2_full], cfg_dataset['file_ids'])):
@@ -1022,7 +1018,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
                 n_after = len(run_obj.stim)
                 print(f"  Run {run_idx+1} ({fid}): kept {n_after}/{n_before} trials (include==1)")
                 if n_after < 6:
-                    print(f"  ⚠ WARNING: only {n_after} trials left — results may be unreliable")
+                    print(f"   WARNING: only {n_after} trials left — results may be unreliable")
             else:
                 print(f"  Run {run_idx+1} ({fid}): no augmented events found — keeping all trials")
     else:
@@ -1095,7 +1091,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
             tr1, te1 = splits1[idx]
             tr2, te2 = splits2[idx]
 
-            # ── Epoch-overlap diagnostic ──────────────────────────────
+            # Epoch-overlap diagnostic
             t_pre_s  = cfg["t_pre"].to("s").magnitude
             t_post_s = cfg["t_post"].to("s").magnitude
             overlap_info = check_epoch_overlap(
@@ -1185,7 +1181,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
                 print(f"  Class balance (fold 0): Train L={n_tr_neg} R={n_tr_pos} | Test L={n_te_neg} R={n_te_pos}")
 
 
-            # ==== D-PRIME RANKING then PCA ON TOP CHANNELS ====
+            # D-PRIME RANKING then PCA ON TOP CHANNELS
             # 1) Rank channels using training data only (labels_train_bin already computed)
             top_ch, comp_scores = good_channels(
                 ts_train, labels_train_bin,
@@ -1376,23 +1372,23 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
                 }
             outer_fold_idx += 1
             
-    # --- 7) Aggregate & plot across outer folds ----
+    # 7) Aggregate & plot across outer folds
     mean_acc = {n: acc_outer[n].mean(0) for n in acc_outer}
     sem_acc  = {n: acc_outer[n].std(0, ddof=1) / np.sqrt(n_outer_folds) for n in acc_outer}
     ci_acc   = {n: 1.96 * sem_acc[n] for n in acc_outer}
     max_acc  = {n: mean_acc[n].max() for n in acc_outer}
 
-    # --- 7a-train) Training accuracy aggregation ----
+    # 7a-train) Training accuracy aggregation
     mean_train_acc = {n: train_acc_outer[n].mean(0) for n in train_acc_outer}
     mean_train_bal = {n: train_bal_acc_outer[n].mean(0) for n in train_bal_acc_outer}
 
-    # --- 7b) Balanced accuracy aggregation ----
+    # 7b) Balanced accuracy aggregation
     mean_bal_acc = {n: bal_acc_outer[n].mean(0) for n in bal_acc_outer}
     sem_bal_acc  = {n: bal_acc_outer[n].std(0, ddof=1) / np.sqrt(n_outer_folds) for n in bal_acc_outer}
     ci_bal_acc   = {n: 1.96 * sem_bal_acc[n] for n in bal_acc_outer}
     max_bal_acc  = {n: mean_bal_acc[n].max() for n in bal_acc_outer}
 
-    # --- 7c) Confusion matrix at peak accuracy window ----
+    # 7c) Confusion matrix at peak accuracy window
     for name in acc_outer:
         peak_w = int(np.argmax(mean_acc[name]))
         peak_t = float(times_all[peak_w])
@@ -1424,7 +1420,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
         acc_R = tp / (tp + fn) if (tp + fn) > 0 else 0
         print(f"  Per-class acc: Left={acc_L:.4f}  Right={acc_R:.4f}")
 
-    # --- 8) PCA summary ----
+    # 8) PCA summary
     print("PCA summary (components per outer fold):")
     print(pca_components_log)
     print(f"Mean components: {np.mean(pca_components_log):.2f} ± {np.std(pca_components_log, ddof=1):.2f}")
@@ -1432,22 +1428,22 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     print([f"{v:.3f}" for v in pca_cumvar_log])
     print(f"Mean cumulative variance: {np.mean(pca_cumvar_log):.3f}")
 
-    # --- 8b) Overlap diagnostic summary ----
+    # 8b) Overlap diagnostic summary
     overlap_counts = [f["n_overlapping_pairs"] for f in overlap_results_all_folds]
     print(f"\n  === EPOCH OVERLAP DIAGNOSTIC ===")
     print(f"  Overlapping train-test pairs per fold: "
           f"min={min(overlap_counts)}  max={max(overlap_counts)}  "
           f"mean={np.mean(overlap_counts):.1f}")
     if max(overlap_counts) == 0:
-        print(f"  ✓ No temporal overlap detected between any train and test epochs")
+        print(f"   No temporal overlap detected between any train and test epochs")
     else:
         frac_with = sum(1 for c in overlap_counts if c > 0)
-        print(f"  ⚠ {frac_with}/{len(overlap_counts)} folds have ≥1 overlapping pair")
+        print(f"   {frac_with}/{len(overlap_counts)} folds have ≥1 overlapping pair")
         # Fraction of test trials affected on average
         mean_n_test = np.mean([f["n_test"] for f in overlap_results_all_folds])
         print(f"  Mean test trials per fold: {mean_n_test:.1f}")
 
-    # --- 8c) Training accuracy summary ----
+    # 8c) Training accuracy summary
     for name in train_acc_outer:
         peak_w = int(np.argmax(mean_acc[name]))
         peak_train_acc = mean_train_acc[name][peak_w]
@@ -1497,7 +1493,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     fig_acc1.savefig(os.path.join(out_dir, "nested_cv_accuracy.png"), dpi = 300)
     plt.close(fig_acc1)
 
-    # --- Per-fold train+test diagnostic plot (gated by FLAG_DIAGNOSTIC_PLOTS) ---
+    # Per-fold train+test diagnostic plot (gated by FLAG_DIAGNOSTIC_PLOTS)
     if FLAG_DIAGNOSTIC_PLOTS:
         for name in classifiers:
             fig_diag, ax_diag = plt.subplots(figsize=(12, 6))
@@ -1569,7 +1565,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
         }, fp, indent=2)
 
     # 3b) Save per-fold accuracy curves, balanced accuracy, predictions, and latency-to-peak
-    # --- Per-fold curves as numpy arrays for easy loading ---
+    # Per-fold curves as numpy arrays for easy loading
     for name in classifiers:
         fold_acc_matrix = acc_outer[name]          # (n_folds, n_windows)
         fold_bal_matrix = bal_acc_outer[name]       # (n_folds, n_windows)
@@ -1584,13 +1580,13 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
             train_balanced_acc=fold_train_bal_matrix, # (50, n_windows)
         )
 
-    # --- Per-fold predictions (per window) as pickle ---
+    # Per-fold predictions (per window) as pickle
     #     fold_preds_storage[fold_idx]['predictions'][clf_name][window_idx] = 1D array of predicted labels
     #     fold_preds_storage[fold_idx]['labels_test'] = 1D array of true labels
     with open(os.path.join(out_dir, "per_fold_predictions.pkl"), "wb") as fp:
         pickle.dump(fold_preds_storage, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
-    # --- Latency to peak per fold (time of max balanced accuracy) ---
+    # Latency to peak per fold (time of max balanced accuracy)
     latency_results = {}
     for name in classifiers:
         peak_idxs = np.argmax(bal_acc_outer[name], axis=1)    # (n_folds,)
@@ -1616,11 +1612,11 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     with open(os.path.join(out_dir, "latency_to_peak.json"), "w") as fp:
         json.dump(latency_results, fp, indent=2)
 
-    # --- Per-fold accuracy curves as JSON (for portability) ---
+    # Per-fold accuracy curves as JSON (for portability)
     with open(os.path.join(out_dir, "per_fold_accuracy_curves.json"), "w") as fp:
         json.dump(per_fold_accuracy_curves, fp, indent=2)
 
-    # --- Overlap diagnostic results ---
+    # Overlap diagnostic results
     with open(os.path.join(out_dir, "overlap_diagnostic.json"), "w") as fp:
         overlap_counts = [f["n_overlapping_pairs"] for f in overlap_results_all_folds]
         json.dump({
@@ -1707,7 +1703,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
         fig_pc.suptitle(f'Subject {subj_id} – Timecourse PCA (first outer fold)')
         fig_pc.savefig(os.path.join(out_dir, 'pc_loadings_and_variance.png'), dpi=300)
         plt.close(fig_pc)
-        # --- New: plot top 20 PC timecourses ---
+        # New: plot top 20 PC timecourses
         if 'first_fold_pc_timecourses' in locals():
             pc_tc = first_fold_pc_timecourses
             t_rel_plot = pc_tc['t_rel']

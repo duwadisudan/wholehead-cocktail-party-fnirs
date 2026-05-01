@@ -8,8 +8,8 @@ and computes empirical chance-threshold bounds at the requested alpha level.
 Companion to the RF variant; retained for the supplementary KNN comparison.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 import pickle
@@ -287,31 +287,31 @@ def main():
     # File path to permutation results
     results_file = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\permutation_test_subject10_baseline_1000perms.pkl"
     
-    print("🔍 PERMUTATION TEST RESULTS ANALYSIS")
+    print(" PERMUTATION TEST RESULTS ANALYSIS")
     print("="*50)
     
     # Load results
     try:
         results = load_permutation_results(results_file)
         permutation_accuracies = np.array(results['permutation_accuracies'])
-        print(f"✅ Loaded {len(permutation_accuracies)} permutation results")
+        print(f" Loaded {len(permutation_accuracies)} permutation results")
     except FileNotFoundError:
-        print(f"❌ File not found: {results_file}")
+        print(f" File not found: {results_file}")
         return
     except Exception as e:
-        print(f"❌ Error loading file: {e}")
+        print(f" Error loading file: {e}")
         return
     
     # Calculate significance bounds for different alpha levels
     alpha_levels = [0.05, 0.01, 0.001]
     
-    print(f"\n📊 STATISTICAL SIGNIFICANCE BOUNDS")
+    print(f"\n STATISTICAL SIGNIFICANCE BOUNDS")
     print("-" * 50)
     
     for alpha in alpha_levels:
         bounds = calculate_significance_bounds(permutation_accuracies, alpha=alpha)
         
-        print(f"\n🎯 Significance level α = {alpha}")
+        print(f"\n Significance level α = {alpha}")
         print(f"   Mean chance level: {bounds['mean']:.4f} ± {bounds['std']:.4f}")
         print(f"   Two-tailed {(1-alpha)*100:.0f}% CI: [{bounds['two_tailed']['lower_bound']:.4f}, {bounds['two_tailed']['upper_bound']:.4f}]")
         print(f"   One-tailed bounds: Lower {alpha*100:.0f}% = {bounds['one_tailed']['lower_bound']:.4f}, Upper {(1-alpha)*100:.0f}% = {bounds['one_tailed']['upper_bound']:.4f}")
@@ -320,7 +320,7 @@ def main():
         if alpha == 0.05:
             main_bounds = bounds
     
-    print(f"\n📈 INTERPRETATION FOR α = 0.05:")
+    print(f"\n INTERPRETATION FOR α = 0.05:")
     print("-" * 50)
     print(f"• Any observed accuracy > {main_bounds['one_tailed']['upper_bound']:.4f} is significantly BETTER than chance (p < 0.05)")
     print(f"• Any observed accuracy < {main_bounds['one_tailed']['lower_bound']:.4f} is significantly WORSE than chance (p < 0.05)")
@@ -334,11 +334,11 @@ def main():
     
     for test_acc in test_accuracies:
         test_results = test_observed_accuracy_significance(test_acc, permutation_accuracies)
-        significance = "✅ SIGNIFICANT" if test_results['one_tailed_test_upper']['significant'] else "❌ NOT SIGNIFICANT"
+        significance = " SIGNIFICANT" if test_results['one_tailed_test_upper']['significant'] else " NOT SIGNIFICANT"
         print(f"Accuracy {test_acc:.2f}: p = {test_results['one_tailed_test_upper']['p_value']:.4f} {significance}")
     
     # Create visualization
-    print(f"\n📊 Creating visualization...")
+    print(f"\n Creating visualization...")
     output_dir = os.path.dirname(results_file)
     viz_path = os.path.join(output_dir, "permutation_analysis_visualization.png")
     
@@ -368,8 +368,8 @@ def main():
     with open(analysis_file, 'wb') as f:
         pickle.dump(analysis_results, f)
     
-    print(f"\n💾 Analysis results saved to: {analysis_file}")
-    print(f"🎯 Analysis complete!")
+    print(f"\n Analysis results saved to: {analysis_file}")
+    print(f" Analysis complete!")
 
 if __name__ == "__main__":
     main()

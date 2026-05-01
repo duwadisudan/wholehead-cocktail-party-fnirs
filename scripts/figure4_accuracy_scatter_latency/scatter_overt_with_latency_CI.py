@@ -6,8 +6,8 @@ plot annotated with peak-accuracy latency and bootstrap confidence intervals.
 Top panel of the vertical Figure 4 layout.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 import sys
 from whichscript import configure, enable_auto_logging
@@ -38,9 +38,7 @@ highlight_threshold = 62.3
 
 output_dir = os.path.dirname(csv_file)
 
-#########################################
 # Load & prepare data
-#########################################
 df = pd.read_csv(csv_file)
 print(f"Data loaded from: {csv_file}")
 print(f"Original data shape: {df.shape}")
@@ -79,9 +77,7 @@ df = df[~df['Subject'].str.strip().str.upper().isin(summary_labels_to_remove)].r
 numeric_cols = [c for c in df.columns if c != 'Subject' and pd.api.types.is_numeric_dtype(df[c])]
 print(f"Numeric columns detected: {numeric_cols}")
 
-#########################################
 # Prepare data for plotting
-#########################################
 plot_df = df.copy()
 
 # Map column names
@@ -128,11 +124,9 @@ event1_color = '#4DAF4A'  # Vibrant green - Cue Onset
 event2_color = '#984EA3'  # Vibrant purple - Movie Onset (at 2s)
 event3_color = '#FF7F00'  # Vibrant orange - Movie Offset (at 5s)
 
-#########################################
 # Compute per-subject latency to 95% of peak
 # Method: average balanced_accuracy across all folds -> one mean curve per subject
 #         then find peak and first crossing of 0.95 * peak on that mean curve
-#########################################
 import json
 
 lat95_values  = []   # one value per subject (latency to 95% of peak on mean curve)
@@ -205,11 +199,9 @@ print(f"Latency-to-lower-bound-of-95%-CI (on mean curve) computed for "
 print(f"  Above-chance subjects (>{highlight_threshold}%): {n_above}/{len(lat95_values)}")
 print(f"  Grand mean latency (above-chance only): {overall_lat95_mean:.3f} s")
 
-# ==============================================================================
 # DIAGNOSTIC FIGURE: mean accuracy curve per subject with
 #   black * = actual peak
 #   red   * = first crossing of 95% of peak (rising edge)
-# ==============================================================================
 n_subj    = len(diag_data)
 n_cols    = 5
 n_rows    = int(np.ceil(n_subj / n_cols))
@@ -261,15 +253,13 @@ fig_diag.savefig(diag_png, dpi=150, bbox_inches='tight',
                  facecolor='white', edgecolor='none')
 print(f"Diagnostic verification figure saved as: {diag_png}")
 
-# ==============================================================================
 # TWO-PANEL LAYOUT:
 #   A  – Accuracy scatter  (top)
 #   B  – Latency-to-95%-peak histogram  (bottom)
-# ==============================================================================
 
 fig_v, (ax1_v, ax2_v) = plt.subplots(2, 1, figsize=(7, 10))
 
-# --- PANEL A: Accuracy scatter (Overt only) ---
+# PANEL A: Accuracy scatter (Overt only)
 upper_chance = highlight_threshold  # 61.67%
 lower_chance = 41.46
 
@@ -315,7 +305,7 @@ ax1_v.text(len(plot_df) + 0.55, overt_mean + 3, 'Mean',
            ha='left', va='bottom', fontsize=MEAN_TEXT_FONT, color=overt_color, fontweight='bold')
 ax1_v_right.set_ylabel('')
 
-# --- PANEL B: Latency-to-95%-peak histogram (Overt only) ---
+# PANEL B: Latency-to-95%-peak histogram (Overt only)
 # Peak search is restricted to 0-5 s so lat95 values are within that range
 bins = np.arange(-0.25, 5.25, 0.5)
 

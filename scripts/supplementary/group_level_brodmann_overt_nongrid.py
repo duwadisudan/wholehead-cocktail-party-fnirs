@@ -5,8 +5,8 @@ Variant of the Figure 2 grid script that emits one figure per ROI rather
 than a multi-panel grid.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os
@@ -37,7 +37,6 @@ importlib.reload(pf)
 
 
 # %% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
 flag_load_preprocessed_control_data = False
@@ -46,7 +45,7 @@ rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen La
 flag_save_preprocessed_data = False
 flag_run_type = 'overt' # 'overt' or 'covert'
 
-# ── Trial-quality filtering via augmented events ──────────────────────
+# Trial-quality filtering via augmented events
 # Augmented events TSVs live in each subject's nirs/ folder.
 # The 'include' column (1 = good trial, gaze + behavioural correctness) is
 # used to drop bad trials before block averaging.
@@ -226,7 +225,7 @@ def apply_trial_filter(rec, subj_ids, file_ids, root_dir, flavor):
                 n_after  = len(run_obj.stim)
                 print(f"  sub-{subj_id} {fid}: kept {n_after}/{n_before} trials")
                 if n_after < 4:
-                    print(f"  ⚠  WARNING: only {n_after} trials left for sub-{subj_id} {fid}")
+                    print(f"    WARNING: only {n_after} trials left for sub-{subj_id} {fid}")
             else:
                 print(f"  sub-{subj_id} {fid}: no augmented events found – keeping all trials")
     print("Trial filtering complete.\n")
@@ -300,9 +299,7 @@ def _blockavg_all_runs(rec, stim_list,
     return out
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2.  Load each flavor and compute block averages
-# ─────────────────────────────────────────────────────────────────────────────
 stim_labels = {
     'overt'   : ['Overt Left', 'Overt Right'],
     'covert'  : ['Covert Left', 'Covert Right'],
@@ -346,7 +343,7 @@ ba_overt = _blockavg_all_runs(rec_overt, stim_labels['overt'])
 #     pickle.dump(ba_overt, f, protocol=pickle.HIGHEST_PROTOCOL)
 # print(f'Saved block averages -> {outdir/fname}')
 
-# ── Load Covert ───────────────────────────────────────────────────────────────
+# Load Covert
 #%%
 # rec_covert, chs_covert = _load_flavor('covert')
 
@@ -371,7 +368,7 @@ def collapse_runs(ba_list):
         out.append(da)
     return out
 
-# ── 2. ROI mean per subject (skip missing channels) ────────────────────────
+# 2. ROI mean per subject (skip missing channels)
 def roi_mean_per_subject(subj_avg_list):
     roi_ds = []
     for da in subj_avg_list:
@@ -471,7 +468,7 @@ def get_significance_mask(pvals, alpha_corrected, n_valid, min_subjects=2):
     return sig_mask
 
 #%%
-# ── apply to overt only ────────────────────────────────────────────────────
+# apply to overt only
 subj_avg_overt = collapse_runs(ba_overt)
 # subj_avg_covert = collapse_runs(ba_covert)   # commented out
 
@@ -481,7 +478,6 @@ subj_roi_overt = roi_mean_per_subject(subj_avg_overt)
 
 #%%
 # APPLY ROBUST STATISTICS — OVERT ONLY
-# ========================================================================
 
 print("\nApplying robust statistics to overt condition...")
 
@@ -528,7 +524,7 @@ print(f"\nRobust analysis complete for overt condition!")
 
 
 #%%
-# ── Publication figure settings ────────────────────────────────────────────
+# Publication figure settings
 # Target: 88 mm wide single-column figure, >= 7 pt text, sans-serif
 
 FIG_WIDTH_MM  = 88
@@ -655,7 +651,6 @@ def plot_roi_group_robust_pub(roi, robust_results, save_dir=None):
 
 # %%
 # SAVE PUBLICATION FIGURES — OVERT CONDITION
-# ========================================================================
 
 print("\nCreating publication figures for overt condition...")
 
@@ -678,7 +673,6 @@ print("   Saved as PDF and SVG at 88 mm width, >= 7 pt sans-serif text")
 
 # %%
 # SAVE STANDALONE LEGEND
-# ========================================================================
 from matplotlib.lines import Line2D
 
 legend_handles = [

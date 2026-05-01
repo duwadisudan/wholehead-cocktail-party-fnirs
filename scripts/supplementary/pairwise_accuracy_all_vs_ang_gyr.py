@@ -8,8 +8,8 @@ paired statistical comparison across subjects, and reports the per-subject
 deltas with the figure used in the supplementary materials.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 from whichscript import configure, enable_auto_logging
@@ -159,7 +159,7 @@ def create_visualization(df1, df2, pairwise_results, condition1_name, condition2
     """
     import matplotlib as mpl
 
-    # ── Font size constants (matched to reference figure) ──────────────
+    # Font size constants (matched to reference figure)
     BASE_FONT_SIZE = 16
     AXIS_LABEL_FONT = 18
     AXIS_TICK_FONT = 15
@@ -181,7 +181,7 @@ def create_visualization(df1, df2, pairwise_results, condition1_name, condition2
         'svg.fonttype': 'none', # editable text in SVG
     })
 
-    # ── Data ────────────────────────────────────────────────────────────
+    # Data
     result = pairwise_results['Overt_perc']
     subjects = result['subjects']
     data1 = result['data1']
@@ -197,10 +197,10 @@ def create_visualization(df1, df2, pairwise_results, condition1_name, condition2
     c_cond2 = '#D65F5F'   # muted red
     c_mean = '#222222'
 
-    # ── Figure ──────────────────────────────────────────────────────────
+    # Figure
     fig, ax = plt.subplots(figsize=(7, 6))
 
-    # ── Paired slopegraph ───────────────────────────────────────────────
+    # Paired slopegraph
     jitter = 0.03
     for i in range(n):
         ax.plot(

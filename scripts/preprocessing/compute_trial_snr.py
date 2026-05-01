@@ -10,8 +10,8 @@ separately and then averaged. Per-subject results are saved as pickle and
 CSV for downstream variability and correlation analyses.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 
@@ -37,12 +37,11 @@ from wholehead_cocktail_party import processing_func as pf
 warnings.filterwarnings('ignore')
 
 #%% Configuration
-##############################################################################
 
 # Run type: 'overt' or 'covert'
 flag_run_type = 'overt'  # Change to 'covert' as needed
 
-print(f"🔍 Run type: '{flag_run_type}'")
+print(f" Run type: '{flag_run_type}'")
 
 # Determine file IDs based on run type
 if flag_run_type.lower() == 'overt':
@@ -77,10 +76,9 @@ SNR_CONFIG = {
 # Output directory
 output_dir = os.path.join(rootDir_saveData, f"trial_snr_{flag_run_type}")
 os.makedirs(output_dir, exist_ok=True)
-print(f"📁 Output directory: {output_dir}")
+print(f" Output directory: {output_dir}")
 
 #%% Helper Functions
-##############################################################################
 
 def load_subject_data(subj_id, preprocessed_dir):
     """Load preprocessed data for a single subject (handles both gzipped and non-gzipped files)."""
@@ -88,10 +86,10 @@ def load_subject_data(subj_id, preprocessed_dir):
     prune_file = os.path.join(preprocessed_dir, f"chs_pruned_subj_{subj_id}.pkl")
     
     if not os.path.exists(rec_file):
-        print(f"  ❌ Missing rec file: {rec_file}")
+        print(f"   Missing rec file: {rec_file}")
         return None, None
     if not os.path.exists(prune_file):
-        print(f"  ❌ Missing prune file: {prune_file}")
+        print(f"   Missing prune file: {prune_file}")
         return None, None
     
     # Try to load as gzipped first, fall back to regular pickle if not gzipped
@@ -272,7 +270,7 @@ def save_subject_snr(subj_id, snr_results, trial_avgs, output_dir, flag_run_type
     }
     with gzip.open(pkl_file, 'wb') as f:
         pickle.dump(save_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-    print(f"  ✅ Saved pickle: {pkl_file}")
+    print(f"   Saved pickle: {pkl_file}")
     
     # Save as CSV (just SNR values)
     csv_file = os.path.join(subj_dir, f"snr_results_{flag_run_type}.csv")
@@ -289,7 +287,7 @@ def save_subject_snr(subj_id, snr_results, trial_avgs, output_dir, flag_run_type
         'std_avg': snr_results['std_avg'],
     })
     df.to_csv(csv_file, index=False)
-    print(f"  ✅ Saved CSV: {csv_file}")
+    print(f"   Saved CSV: {csv_file}")
     
     # Create summary plot
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
@@ -321,11 +319,10 @@ def save_subject_snr(subj_id, snr_results, trial_avgs, output_dir, flag_run_type
     fig_file = os.path.join(subj_dir, f"snr_plot_{flag_run_type}.png")
     plt.savefig(fig_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✅ Saved plot: {fig_file}")
+    print(f"   Saved plot: {fig_file}")
 
 
 #%% Main Processing Loop
-##############################################################################
 
 print(f"\n{'='*70}")
 print(f"Starting SNR calculation for {len(cfg_dataset['subj_ids'])} subjects")
@@ -344,10 +341,10 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     rec_runs, chs_pruned = load_subject_data(subj_id, preprocessed_dir)
     
     if rec_runs is None:
-        print(f"  ⚠️  Skipping subject {subj_id} - no data found")
+        print(f"    Skipping subject {subj_id} - no data found")
         continue
     
-    print(f"  ✅ Loaded {len(rec_runs)} runs")
+    print(f"   Loaded {len(rec_runs)} runs")
     
     # 2. Extract trial-level HRFs
     print(f"  Extracting trial-level HRFs...")
@@ -360,7 +357,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     )
     
     if len(trial_hrfs) == 0:
-        print(f"  ⚠️  Skipping subject {subj_id} - no trials extracted")
+        print(f"    Skipping subject {subj_id} - no trials extracted")
         continue
     
     # 3. Calculate SNR per channel
@@ -387,10 +384,9 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
         'n_channels': len(snr_results['channels']),
     })
     
-    print(f"  ✅ Subject {subj_id} complete!")
+    print(f"   Subject {subj_id} complete!")
 
 #%% Save Summary Across All Subjects
-##############################################################################
 
 print(f"\n{'='*70}")
 print("Creating summary across all subjects...")
@@ -401,10 +397,10 @@ if len(all_subjects_snr) > 0:
     summary_df = pd.DataFrame(all_subjects_snr)
     summary_file = os.path.join(output_dir, f"snr_summary_all_subjects_{flag_run_type}.csv")
     summary_df.to_csv(summary_file, index=False)
-    print(f"✅ Saved summary: {summary_file}")
+    print(f" Saved summary: {summary_file}")
     
     # Print summary statistics
-    print("\n📊 Summary Statistics:")
+    print("\n Summary Statistics:")
     print(f"  Total subjects processed: {len(all_subjects_snr)}")
     print(f"  Average SNR (Left):   {summary_df['snr_left_mean'].mean():.3f} ± {summary_df['snr_left_mean'].std():.3f}")
     print(f"  Average SNR (Right):  {summary_df['snr_right_mean'].mean():.3f} ± {summary_df['snr_right_mean'].std():.3f}")
@@ -431,12 +427,12 @@ if len(all_subjects_snr) > 0:
     summary_plot_file = os.path.join(output_dir, f"snr_summary_plot_{flag_run_type}.png")
     plt.savefig(summary_plot_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"✅ Saved summary plot: {summary_plot_file}")
+    print(f" Saved summary plot: {summary_plot_file}")
 else:
-    print("⚠️  No subjects were successfully processed!")
+    print("  No subjects were successfully processed!")
 
 print(f"\n{'='*70}")
-print("✅ SNR calculation complete!")
+print(" SNR calculation complete!")
 print(f"Results saved to: {output_dir}")
 print(f"{'='*70}\n")
 

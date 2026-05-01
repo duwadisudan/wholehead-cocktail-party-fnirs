@@ -5,8 +5,8 @@ Variant of the Figure 2 group-level ROI script restricted to the covert
 attention condition.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os
@@ -37,7 +37,6 @@ importlib.reload(pf)
 
 
 # %% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
 flag_load_preprocessed_control_data = False
@@ -46,7 +45,7 @@ rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen La
 flag_save_preprocessed_data = False
 flag_run_type = 'covert' # 'overt' or 'covert'
 
-# ── Trial-quality filtering via augmented events ──────────────────────
+# Trial-quality filtering via augmented events
 # Augmented events TSVs live in each subject's nirs/ folder.
 # The 'include' column (1 = good trial, gaze + behavioural correctness) is
 # used to drop bad trials before block averaging.
@@ -226,7 +225,7 @@ def apply_trial_filter(rec, subj_ids, file_ids, root_dir, flavor):
                 n_after  = len(run_obj.stim)
                 print(f"  sub-{subj_id} {fid}: kept {n_after}/{n_before} trials")
                 if n_after < 4:
-                    print(f"  ⚠  WARNING: only {n_after} trials left for sub-{subj_id} {fid}")
+                    print(f"    WARNING: only {n_after} trials left for sub-{subj_id} {fid}")
             else:
                 print(f"  sub-{subj_id} {fid}: no augmented events found – keeping all trials")
     print("Trial filtering complete.\n")
@@ -300,9 +299,7 @@ def _blockavg_all_runs(rec, stim_list,
     return out
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2.  Load each flavor and compute block averages
-# ─────────────────────────────────────────────────────────────────────────────
 stim_labels = {
     'overt'   : ['Overt Left', 'Overt Right'],
     'covert'  : ['Covert Left', 'Covert Right'],
@@ -366,7 +363,7 @@ def collapse_runs(ba_list):
         out.append(da)
     return out
 
-# ── 2. ROI mean per subject (skip missing channels) ────────────────────────
+# 2. ROI mean per subject (skip missing channels)
 def roi_mean_per_subject(subj_avg_list):
     roi_ds = []
     for da in subj_avg_list:
@@ -466,7 +463,7 @@ def get_significance_mask(pvals, alpha_corrected, n_valid, min_subjects=2):
     return sig_mask
 
 #%%
-# ── apply to covert only ───────────────────────────────────────────────────
+# apply to covert only
 subj_avg_covert = collapse_runs(ba_covert)
 
 #%%
@@ -474,7 +471,6 @@ subj_roi_covert = roi_mean_per_subject(subj_avg_covert)
 
 #%%
 # APPLY ROBUST STATISTICS — COVERT ONLY
-# ========================================================================
 
 print("\nApplying robust statistics to covert condition...")
 
@@ -521,7 +517,7 @@ print(f"\nRobust analysis complete for covert condition!")
 
 
 #%%
-# ── Publication grid figure settings ───────────────────────────────────────
+# Publication grid figure settings
 # Target: 180 mm wide × 210 mm tall artboard, >= 7 pt text, sans-serif
 import math
 
@@ -544,7 +540,7 @@ plt.rcParams.update({
     'figure.titlesize' : PUB_FONT_SIZE + 2,
 })
 
-# ── Split ROIs by hemisphere ──────────────────────────────────────────────
+# Split ROIs by hemisphere
 left_rois  = sorted([r for r in all_rois if r.startswith("Left")])
 right_rois = sorted([r for r in all_rois if r.startswith("Right")])
 
@@ -664,7 +660,6 @@ def _plot_hemisphere_grid(rois, hemisphere_label, robust_results, save_path):
 
 # %%
 # SAVE GRID FIGURES — LEFT AND RIGHT HEMISPHERES
-# ========================================================================
 
 save_dir = Path(
     "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\"

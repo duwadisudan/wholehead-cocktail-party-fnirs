@@ -6,8 +6,8 @@ courses (group mean ± SEM) without condition restriction. Reference
 implementation that the figure-specific variants are derived from.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os
@@ -38,7 +38,6 @@ importlib.reload(pf)
 
 
 # %% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
 flag_load_preprocessed_control_data = True
@@ -48,8 +47,8 @@ flag_save_preprocessed_data = False
 flag_run_type = 'overt' # 'overt' or 'covert'
 
 # DEBUG: Print to confirm what flag_run_type is being used
-print(f"🔍 DEBUG: flag_run_type is set to: '{flag_run_type}'")
-print(f"🔍 DEBUG: This should create folders like: sub_XX_{flag_run_type}")
+print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
+print(f" DEBUG: This should create folders like: sub_XX_{flag_run_type}")
 
 if flag_run_type.lower() == 'overt':
     selected_file_ids = ['overt_run-01','overt_run-02']
@@ -193,7 +192,7 @@ def _load_flavor(flavor, root=rootDir_saveData, snr_thresh=0):
         raise FileNotFoundError(f"Directory not found: {subj_dir}")
     
     subj_ids = cfg_dataset['subj_ids']
-    print(f"📁 Loading from: {subj_dir}")
+    print(f" Loading from: {subj_dir}")
     print(f"👥 Subjects: {len(subj_ids)}")
     
     for idx, subj_id in enumerate(subj_ids, 1):
@@ -218,16 +217,16 @@ def _load_flavor(flavor, root=rootDir_saveData, snr_thresh=0):
                 with open(prune_file, 'rb') as f:
                     chs_pruned.append(pickle.load(f))
             
-            print("✅")
+            print("")
         else:
-            print(f"  [{idx:2d}/{len(subj_ids)}] Subject {subj_id}... ❌ MISSING")
+            print(f"  [{idx:2d}/{len(subj_ids)}] Subject {subj_id}...  MISSING")
             print(f"       Expected: {rec_file}")
             print(f"       Expected: {prune_file}")
     
     if not rec:
         raise FileNotFoundError(f"No subject data loaded for {flavor} from {subj_dir}")
     
-    print(f"✅ Successfully loaded {len(rec)}/{len(subj_ids)} subjects for {flavor.upper()} condition\n")
+    print(f" Successfully loaded {len(rec)}/{len(subj_ids)} subjects for {flavor.upper()} condition\n")
     return rec, chs_pruned
 
 
@@ -246,9 +245,7 @@ def _blockavg_all_runs(rec, stim_list,
     return out
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2.  Load each flavor and compute block averages
-# ─────────────────────────────────────────────────────────────────────────────
 stim_labels = {
     'overt'   : ['Overt Left', 'Overt Right'],
     'covert'  : ['Covert Left', 'Covert Right'],
@@ -262,20 +259,16 @@ rec_overt,   chs_overt   = _load_flavor('overt')
 
 ba_overt                  = _blockavg_all_runs(rec_overt, stim_labels['overt'])
 #%%
-# -------------------------------------------------
 # 1.  Decide where and what to name the file
-# -------------------------------------------------
 outdir   = Path(rootDir_saveData)          # same folder you’ve been using
 outdir.mkdir(parents=True, exist_ok=True)  # create it if it doesn’t exist
 fname    = 'all_sub_conc_tddr_overt.pkl.gz'         # .gz extension is optional
 
-# -------------------------------------------------
 # 2.  Dump with highest pickle protocol + gzip
-# -------------------------------------------------
 with gzip.open(outdir / fname, 'wb') as f:
     pickle.dump(ba_overt, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-print(f'✔️  Saved block averages → {outdir/fname}')
+print(f'  Saved block averages → {outdir/fname}')
 
 
 #%%
@@ -283,40 +276,32 @@ print(f'✔️  Saved block averages → {outdir/fname}')
 rec_covert,  chs_covert  = _load_flavor('covert')
 ba_covert                 = _blockavg_all_runs(rec_covert, stim_labels['covert'])
 
-# -------------------------------------------------
 # 1.  Decide where and what to name the file
-# -------------------------------------------------
 outdir   = Path(rootDir_saveData)          # same folder you’ve been using
 outdir.mkdir(parents=True, exist_ok=True)  # create it if it doesn’t exist
 fname    = 'all_sub_conc_tddr_covert.pkl.gz'         # .gz extension is optional
 
-# -------------------------------------------------
 # 2.  Dump with highest pickle protocol + gzip
-# -------------------------------------------------
 with gzip.open(outdir / fname, 'wb') as f:
     pickle.dump(ba_covert, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-print(f'✔️  Saved block averages → {outdir/fname}')
+print(f'  Saved block averages → {outdir/fname}')
 
 #%%
 # Control
 rec_ctrl,    chs_ctrl    = _load_flavor('control')
 ba_ctrl                   = _blockavg_all_runs(rec_ctrl, stim_labels['control'])
 
-# -------------------------------------------------
 # 1.  Decide where and what to name the file
-# -------------------------------------------------
 outdir   = Path(rootDir_saveData)          # same folder you’ve been using
 outdir.mkdir(parents=True, exist_ok=True)  # create it if it doesn’t exist
 fname    = 'all_sub_conc_tddr_control.pkl.gz'         # .gz extension is optional
 
-# -------------------------------------------------
 # 2.  Dump with highest pickle protocol + gzip
-# -------------------------------------------------
 with gzip.open(outdir / fname, 'wb') as f:
     pickle.dump(ba_ctrl, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-print(f'✔️  Saved block averages → {outdir/fname}')
+print(f'  Saved block averages → {outdir/fname}')
 
 
 
@@ -337,7 +322,7 @@ def collapse_runs(ba_list):
         out.append(da)
     return out
 
-# ── 2. ROI mean per subject (skip missing channels) ────────────────────────
+# 2. ROI mean per subject (skip missing channels)
 def roi_mean_per_subject(subj_avg_list):
     roi_ds = []
     for da in subj_avg_list:
@@ -392,7 +377,7 @@ def bonferroni_pvals_robust(subj_roi_list, win_sec=2.0, alpha=0.05, min_subjects
         subj_roi_filtered.append(da_filtered)
     
     if not subj_roi_filtered or len(roi_keep) == 0:
-        print("❌ No valid ROIs found!")
+        print(" No valid ROIs found!")
         return None, None, None
     
     da = xr.concat(subj_roi_filtered, dim="subj")
@@ -444,7 +429,7 @@ def get_significance_mask(pvals, alpha_corrected, n_valid, min_subjects=2):
     return sig_mask
 
 #%%
-# ── apply to each flavour ──────────────────────────────────────────────────
+# apply to each flavour
 subj_avg_overt   = collapse_runs(ba_overt)
 subj_avg_covert  = collapse_runs(ba_covert)
 subj_avg_control = collapse_runs(ba_ctrl)
@@ -457,7 +442,6 @@ subj_roi_control = roi_mean_per_subject(subj_avg_control)
 
 #%%
 # APPLY ROBUST STATISTICS TO ALL CONDITIONS
-# ========================================================================
 
 print("\n🔄 Applying robust statistics to all conditions...")
 
@@ -496,15 +480,15 @@ for condition_name, subj_data in conditions.items():
             'sig_rate': 100 * significant / total_tests
         }
         
-        print(f"   ✅ Significant: {significant}/{total_tests} ({100*significant/total_tests:.1f}%)")
+        print(f"    Significant: {significant}/{total_tests} ({100*significant/total_tests:.1f}%)")
         
         if sig_mask.any():
             sig_n_valid = n_valid.where(sig_mask)
-            print(f"   📊 Subject counts: {sig_n_valid.min().item():.0f}-{sig_n_valid.max().item():.0f}")
+            print(f"    Subject counts: {sig_n_valid.min().item():.0f}-{sig_n_valid.max().item():.0f}")
     else:
-        print(f"   ❌ No valid results for {condition_name}")
+        print(f"    No valid results for {condition_name}")
 
-print(f"\n✅ Robust analysis complete for all conditions!")
+print(f"\n Robust analysis complete for all conditions!")
 
 
 
@@ -644,14 +628,13 @@ def plot_roi_group_robust(roi, robust_results, save_path=None):
 
 # %%
 # ROBUST PLOTTING WITH SIGNIFICANCE HIGHLIGHTING
-# ========================================================================
 
-print("\n📊 Creating publication-quality plots with significance highlighting...")
+print("\n Creating publication-quality plots with significance highlighting...")
 
 # Set up save directory
 save_dir = Path("U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Group_avg_results\\figures_BA_snr_0")
 save_dir.mkdir(parents=True, exist_ok=True)
-print(f"📁 Saving figures to: {save_dir}")
+print(f" Saving figures to: {save_dir}")
 
 # Plot first 5 ROIs using the robust method
 for roi in all_rois:
@@ -659,7 +642,7 @@ for roi in all_rois:
     save_path = save_dir / f"HRF_robust_{roi}.png"
     plot_roi_group_robust(roi, robust_results, save_path=str(save_path))
 
-print("\n✅ Robust plots created!")
+print("\n Robust plots created!")
 print("   • Thick lines (width=8) indicate significant time series")
 print("   • Thin lines (width=1) for non-significant time series") 
 print("   • Both trial types (Left/Right) shown on same plot")

@@ -17,8 +17,8 @@ overt accuracy are reported for All-Channels and Angular Gyrus separately,
 producing a 2x2 publication figure.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%%

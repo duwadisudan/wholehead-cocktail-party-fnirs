@@ -23,8 +23,8 @@ overt against covert (and control) per hemisphere. Uses the same per-ROI
 extraction functions as the group-level Brodmann scripts.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%%
@@ -50,7 +50,7 @@ try:
     from adjustText import adjust_text
     ADJUST_TEXT_AVAILABLE = True
 except ImportError:
-    print("⚠️  adjustText not available. Installing...")
+    print("  adjustText not available. Installing...")
     import subprocess
     subprocess.check_call(['pip', 'install', 'adjustText'])
     from adjustText import adjust_text
@@ -167,24 +167,24 @@ def load_top_n_rois_from_pc_contrib(csv_path, top_n=5):
         top_rois_normalized = {normalize_roi_name(r) for r in top_rois}
         # Also create mapping from normalized to original
         norm_to_original = {normalize_roi_name(r): r for r in top_rois}
-        print(f"✓ Loaded top {top_n} ROIs from PC contribution analysis:")
+        print(f" Loaded top {top_n} ROIs from PC contribution analysis:")
         for i, roi in enumerate(top_rois, 1):
             importance = df.iloc[i-1]['mean_importance']
             print(f"   {i}. {roi} ({importance:.2f}% contribution)")
         return top_rois_normalized, norm_to_original
     except FileNotFoundError:
-        print(f"⚠️  PC contribution file not found: {csv_path}")
+        print(f"  PC contribution file not found: {csv_path}")
         print("   Falling back to distance-based annotation threshold")
         return set(), {}
     except Exception as e:
-        print(f"⚠️  Error loading PC contributions: {e}")
+        print(f"  Error loading PC contributions: {e}")
         print("   Falling back to distance-based annotation threshold")
         return set(), {}
 
 # Load top 10 ROIs from overt PC contribution analysis
 pc_contrib_overt_csv = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_group_roi_contributions\group_overt_roi_contrib\roi_contrib_group_summary.csv"
 
-print("\n🎯 Loading top ROIs from PC contribution analysis for annotation...")
+print("\n Loading top ROIs from PC contribution analysis for annotation...")
 TOP_ROIS_FOR_ANNOTATION, TOP_ROIS_NORM_TO_ORIG = load_top_n_rois_from_pc_contrib(pc_contrib_overt_csv, top_n=5)
 
 # GLOBAL color mapping - ensures same ROI always gets same color across ALL plots
@@ -215,7 +215,7 @@ TOP_ROI_COLOR_MAP = {
     _base_roi_name(orig_name): RING_COLORS[i % len(RING_COLORS)]
     for i, (norm, orig_name) in enumerate(sorted(TOP_ROIS_NORM_TO_ORIG.items()))
 }
-print(f"\n🎨 Global ROI color mapping (base names):")
+print(f"\n Global ROI color mapping (base names):")
 for roi_base, color in TOP_ROI_COLOR_MAP.items():
     print(f"   {roi_base} → {color}")
 
@@ -244,9 +244,9 @@ def load_all_subjects(subj_ids, run_type, data_dir):
             except Exception:
                 with open(prune_file, 'rb') as f:
                     chs_pruned_subjs.append(pickle.load(f))
-            print(f"✓ Loaded subject {subj_id}")
+            print(f" Loaded subject {subj_id}")
         else:
-            print(f"⚠ Warning: Subject {subj_id} not found, skipping")
+            print(f" Warning: Subject {subj_id} not found, skipping")
             rec.append(None)
             chs_pruned_subjs.append(None)
     
@@ -353,7 +353,7 @@ def process_condition(subj_ids, condition_name, trial_names, data_dir):
     del subj_roi
     gc.collect()
     
-    print(f"✅ {condition_name.upper()} processing complete!")
+    print(f" {condition_name.upper()} processing complete!")
     
     return group_mean, group_sem, n_subj
 
@@ -564,7 +564,7 @@ if not RUN_ONLY_TOP5:
         return fig, ax
 
 
-    print("\n📊 Creating Overt vs Control scatter plots for all ROIs...")
+    print("\n Creating Overt vs Control scatter plots for all ROIs...")
     scatter_dir = output_dir / "scatter_plots"
     scatter_dir.mkdir(exist_ok=True)
 
@@ -573,7 +573,7 @@ if not RUN_ONLY_TOP5:
         save_path = scatter_dir / f"scatter_overt_vs_control_{roi}.png"
         create_scatter_plot(roi, max_vals_overt, max_vals_control, save_path=str(save_path))
 
-    print(f"✅ Saved Overt vs Control scatter plots to: {scatter_dir}")
+    print(f" Saved Overt vs Control scatter plots to: {scatter_dir}")
 
     #%% Create COMBINED scatter plot with ALL ROIs
 
@@ -666,14 +666,14 @@ if not RUN_ONLY_TOP5:
         return fig, ax
 
 
-    print("\n📊 Creating COMBINED scatter plots with all ROIs...")
+    print("\n Creating COMBINED scatter plots with all ROIs...")
 
     # Overt vs Control
     combined_save_path_overt_control = output_dir / "scatter_plots" / "scatter_ALL_ROIS_overt_vs_control.png"
     create_combined_scatter_plot(all_rois, max_vals_overt, max_vals_control, 
                                 x_label='Overt', y_label='Control',
                                 save_path=str(combined_save_path_overt_control))
-    print(f"✅ Saved Overt vs Control combined scatter plot to: {combined_save_path_overt_control}")
+    print(f" Saved Overt vs Control combined scatter plot to: {combined_save_path_overt_control}")
 
 
     #%% Create hemisphere × trial-type specific scatter plots with annotations
@@ -839,9 +839,9 @@ if not RUN_ONLY_TOP5:
         return fig, ax
 
 
-    print("\n📊 Creating hemisphere × trial-type scatter plots with ROI labels...")
+    print("\n Creating hemisphere × trial-type scatter plots with ROI labels...")
 
-    print("\n🎯 ANNOTATION STRATEGY:")
+    print("\n ANNOTATION STRATEGY:")
     print("  1. Top-5 PC contributor ROIs get colored rings (Red, Blue, Green, Purple, Orange)")
     print("  2. Legend shows ROI names with matching colored ring markers")
     print("  3. All other points remain as solid circles with black edges")
@@ -850,7 +850,7 @@ if not RUN_ONLY_TOP5:
     if TOP_ROIS_FOR_ANNOTATION:
         print(f"  📌 Top-5 ROIs to annotate: {TOP_ROIS_FOR_ANNOTATION}")
     else:
-        print("  ⚠️  No top ROIs loaded - no annotations will be added")
+        print("    No top ROIs loaded - no annotations will be added")
     print()
 
     # Create all 4 combinations for Overt vs Control in a SEPARATE SUBFOLDER
@@ -861,7 +861,7 @@ if not RUN_ONLY_TOP5:
         ('right', 'right', 'RIGHT_HEMI_RIGHT_TRIAL'),
     ]
 
-    print("\n📊 Creating Overt vs Control scatter plots (in separate subfolder)...")
+    print("\n Creating Overt vs Control scatter plots (in separate subfolder)...")
     overt_control_dir = output_dir / "scatter_plots" / "overt_vs_control_main"
     overt_control_dir.mkdir(parents=True, exist_ok=True)
 
@@ -871,11 +871,11 @@ if not RUN_ONLY_TOP5:
                                        x_label='Overt', y_label='Control',
                                        hemisphere=hemi, trial_side=trial,
                                        save_path=str(save_path))
-        print(f"✅ Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
+        print(f" Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
 
-    print(f"\n✅ Overt vs Control plots saved to: {overt_control_dir}")
+    print(f"\n Overt vs Control plots saved to: {overt_control_dir}")
 
-    print("\n📊 Creating Overt vs Covert scatter plots...")
+    print("\n Creating Overt vs Covert scatter plots...")
     overt_covert_dir = output_dir / "scatter_plots" / "overt_vs_covert_main"
     overt_covert_dir.mkdir(parents=True, exist_ok=True)
 
@@ -885,9 +885,9 @@ if not RUN_ONLY_TOP5:
                                        x_label='Overt', y_label='Covert',
                                        hemisphere=hemi, trial_side=trial,
                                        save_path=str(save_path))
-        print(f"✅ Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
+        print(f" Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
 
-    print(f"\n✅ Overt vs Covert plots saved to: {overt_covert_dir}")
+    print(f"\n Overt vs Covert plots saved to: {overt_covert_dir}")
 
     #%% Create HRF plots with max markers for verification
 
@@ -983,7 +983,7 @@ if not RUN_ONLY_TOP5:
         return fig, ax
 
 
-    print("\n📊 Creating HRF plots with max markers for verification...")
+    print("\n Creating HRF plots with max markers for verification...")
     hrf_overt_dir = output_dir / "hrf_plots_overt"
     hrf_control_dir = output_dir / "hrf_plots_control"
     hrf_overt_dir.mkdir(exist_ok=True)
@@ -1002,14 +1002,14 @@ if not RUN_ONLY_TOP5:
         plot_hrf_with_max_marker(roi, group_mean_control, group_sem_control,
                                  max_vals_control, "Control", save_path=str(save_path))
 
-    print(f"✅ Saved HRF plots to: {hrf_overt_dir} and {hrf_control_dir}")
+    print(f" Saved HRF plots to: {hrf_overt_dir} and {hrf_control_dir}")
 
     #%% Create summary table
 
     summary_data = []
 
     # DEBUG: Check what's actually in max_vals
-    print("\n🔍 DEBUG: Checking max_vals structure...")
+    print("\n DEBUG: Checking max_vals structure...")
     if max_vals_overt:
         first_roi = list(max_vals_overt.keys())[0]
         print(f"   First Overt ROI: {first_roi}")
@@ -1049,14 +1049,14 @@ if not RUN_ONLY_TOP5:
                     })
         else:
             if roi not in max_vals_overt:
-                print(f"   ✗ ROI '{roi}' NOT in max_vals_overt")
+                print(f"    ROI '{roi}' NOT in max_vals_overt")
             if roi not in max_vals_control:
-                print(f"   ✗ ROI '{roi}' NOT in max_vals_control")
+                print(f"    ROI '{roi}' NOT in max_vals_control")
 
     summary_df = pd.DataFrame(summary_data)
 
     if len(summary_df) == 0:
-        print("\n⚠️  WARNING: No matching ROIs found in both Overt and Control conditions!")
+        print("\n  WARNING: No matching ROIs found in both Overt and Control conditions!")
         print(f"   Overt ROIs: {list(max_vals_overt.keys())}")
         print(f"   Control ROIs: {list(max_vals_control.keys())}")
         print("\n   This might mean:")
@@ -1065,24 +1065,24 @@ if not RUN_ONLY_TOP5:
         print("   3. No overlapping ROIs between conditions")
     else:
         summary_df.to_csv(output_dir / "overt_vs_control_summary.csv", index=False)
-        print(f"\n✅ Saved summary table to: {output_dir / 'overt_vs_control_summary.csv'}")
+        print(f"\n Saved summary table to: {output_dir / 'overt_vs_control_summary.csv'}")
         print(f"\nSummary statistics:")
         print(summary_df.describe())
-        print(f"\n📊 Total comparisons: {len(summary_df)} (ROIs × trial types)")
+        print(f"\n Total comparisons: {len(summary_df)} (ROIs × trial types)")
 
-    print("\n🎉 Analysis complete!")
+    print("\n Analysis complete!")
     print(f"\nAll outputs saved to: {output_dir}")
     print(f"  - max_values_overt.json: Max values for Overt condition")
     print(f"  - max_values_covert.json: Max values for Covert condition")
     print(f"  - max_values_control.json: Max values for Control condition")
     print(f"  - scatter_plots/")
     print(f"      • scatter_ALL_ROIS_overt_vs_control.png: Combined plot (all ROIs, Overt vs Control)")
-    print(f"      • overt_vs_control_main/  ← 🎯 OVERT vs CONTROL PLOTS")
+    print(f"      • overt_vs_control_main/  ←  OVERT vs CONTROL PLOTS")
     print(f"          - scatter_LEFT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_LEFT_HEMI_RIGHT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_RIGHT_TRIAL.png")
-    print(f"      • overt_vs_covert_main/  ← 🎯 OVERT vs COVERT PLOTS")
+    print(f"      • overt_vs_covert_main/  ←  OVERT vs COVERT PLOTS")
     print(f"          - scatter_LEFT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_LEFT_HEMI_RIGHT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_LEFT_TRIAL.png")
@@ -1092,10 +1092,10 @@ if not RUN_ONLY_TOP5:
     print(f"  - overt_vs_control_summary.csv: Summary table with all max values")
 
     print(f"\n📍 Annotation Strategy:")
-    print(f"  ✓ Color-coded rings: Red, Blue, Green, Purple, Orange")
-    print(f"  ✓ Legend with matching ring colors shows ROI names")
-    print(f"  ✓ Clean visualization - no text on data points")
-    print(f"  ✓ Easy visual matching between rings and legend")
+    print(f"   Color-coded rings: Red, Blue, Green, Purple, Orange")
+    print(f"   Legend with matching ring colors shows ROI names")
+    print(f"   Clean visualization - no text on data points")
+    print(f"   Easy visual matching between rings and legend")
 
 
 #%% Create CONDENSED Top 5 ROI scatter plots (Option 2: Four plots - 2 comparisons × 2 hemispheres)
@@ -1321,7 +1321,7 @@ def create_top5_condensed_scatter(max_vals_x, max_vals_y,
         fig.savefig(svg_path, format='svg', bbox_inches='tight')
         pdf_path = save_path.replace('.png', '.pdf')
         fig.savefig(pdf_path, format='pdf', bbox_inches='tight')
-        print(f"   ✅ Saved: {Path(save_path).name}")
+        print(f"    Saved: {Path(save_path).name}")
         plt.close(fig)
 
     return fig, ax
@@ -1329,7 +1329,7 @@ def create_top5_condensed_scatter(max_vals_x, max_vals_y,
 
 # Create the condensed top 5 plots (4 total: 2 comparisons × 2 hemispheres)
 print("\n" + "="*70)
-print("📊 Creating CONDENSED Top 5 ROI scatter plots (4 plots)")
+print(" Creating CONDENSED Top 5 ROI scatter plots (4 plots)")
 print("   Layout: 2 comparisons × 2 hemispheres")
 print("   Same ROI = Same color across hemispheres")
 print("   Filled = Left trial, Open = Right trial")
@@ -1398,7 +1398,7 @@ create_top5_condensed_scatter(max_vals_overt, max_vals_covert,
                               label_fontsize=40,
                               tick_fontsize=42)
 
-print(f"\n✅ Condensed Top 5 plots saved to: {top5_dir}")
+print(f"\n Condensed Top 5 plots saved to: {top5_dir}")
 print(f"   • top5_overt_vs_control_LEFT_HEMI.png/.svg/.pdf")
 print(f"   • top5_overt_vs_control_RIGHT_HEMI.png/.svg/.pdf")
 print(f"   • top5_overt_vs_covert_LEFT_HEMI.png/.svg/.pdf")
@@ -1452,7 +1452,7 @@ def create_standalone_legend(save_dir):
         out_path = save_dir / f"standalone_legend.{ext}"
         fig.savefig(out_path, format=ext, bbox_inches='tight', dpi=300,
                     transparent=True) 
-        print(f"   ✅ Saved standalone legend: {out_path.name}")
+        print(f"    Saved standalone legend: {out_path.name}")
 
     plt.close(fig)
 

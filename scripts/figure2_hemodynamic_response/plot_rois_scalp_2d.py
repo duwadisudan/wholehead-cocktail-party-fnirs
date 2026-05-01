@@ -8,8 +8,8 @@ Angular Gyrus channels highlighted in green. Used as the inset / overlay
 companion to the hemodynamic response grid.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%%
@@ -64,7 +64,7 @@ warnings.filterwarnings('ignore')
 #     ...
 
 
-# === Load SNIRF for geometry ===
+# Load SNIRF for geometry
 def load_snirf_for_geometry(subject_id: str, condition: str, master_data_dir: str):
     """
     Load SNIRF file to get rec and geo3d for plotting.
@@ -74,36 +74,36 @@ def load_snirf_for_geometry(subject_id: str, condition: str, master_data_dir: st
     snirf_path = os.path.join(master_data_dir, f"sub-{subject_id}", "nirs", snirf_filename)
 
     if not os.path.exists(snirf_path):
-        print(f"✗ SNIRF not found: {snirf_path}")
+        print(f" SNIRF not found: {snirf_path}")
         return None
 
-    print(f"✓ Loading SNIRF for geometry: {snirf_filename}")
+    print(f" Loading SNIRF for geometry: {snirf_filename}")
 
     try:
         records = snirf_io.read_snirf(snirf_path)
         rec = records[0] if isinstance(records, list) else records
 
         if not hasattr(rec, 'geo3d') or rec.geo3d is None:
-            print(f"⚠️ Warning: No geo3d found in SNIRF file")
+            print(f" Warning: No geo3d found in SNIRF file")
             return None
 
         return rec
 
     except Exception as e:
-        print(f"✗ Error loading SNIRF: {e}")
+        print(f" Error loading SNIRF: {e}")
         return None
 
 
-# === ROI helper functions ===
+# ROI helper functions
 def load_roi_mapping(roi_csv_path: str) -> dict:
     """Load ROI mapping CSV into dict channel_label -> brodmann."""
     try:
         roi_df = pd.read_csv(roi_csv_path)
         roi_dict = dict(zip(roi_df['channel_label'], roi_df['brodmann']))
-        print(f"✓ Loaded ROI mapping for {len(roi_dict)} channels")
+        print(f" Loaded ROI mapping for {len(roi_dict)} channels")
         return roi_dict
     except Exception as e:
-        print(f"⚠️ Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
+        print(f" Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
         return {}
 
 
@@ -124,7 +124,7 @@ def get_display_name(channel_name: str, roi_mapping: dict) -> str:
     return channel_name
 
 
-# === Single ROI highlight plot ===
+# Single ROI highlight plot
 def plot_single_roi_highlight(rec, roi_mapping: dict, roi_name: str, condition: str,
                               output_base_dir: str, highlight_color='black',
                               output_filename: str | None = None):
@@ -137,7 +137,7 @@ def plot_single_roi_highlight(rec, roi_mapping: dict, roi_name: str, condition: 
     import matplotlib
 
     if not (hasattr(rec, 'timeseries') and 'amp' in rec.timeseries):
-        print("⚠️ Could not find amp timeseries in rec")
+        print(" Could not find amp timeseries in rec")
         return
     amp_data = rec.timeseries['amp']
     rec_channels = amp_data.channel
@@ -151,9 +151,9 @@ def plot_single_roi_highlight(rec, roi_mapping: dict, roi_name: str, condition: 
             metric_values[i] = 1.0
             n_matched += 1
 
-    print(f"✓ Highlighted {n_matched} channels for ROI: {roi_name}")
+    print(f" Highlighted {n_matched} channels for ROI: {roi_name}")
     if n_matched == 0:
-        print(f"⚠️ No channels matched ROI '{roi_name}' — check spelling against roi_mapping values")
+        print(f" No channels matched ROI '{roi_name}' — check spelling against roi_mapping values")
         return
 
     coords_dict = {
@@ -197,11 +197,11 @@ def plot_single_roi_highlight(rec, roi_mapping: dict, roi_name: str, condition: 
     for ext in ('png', 'svg', 'pdf'):
         output_file = os.path.join(output_dir, f"{output_filename}.{ext}")
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
-        print(f"✓ Saved: {output_file}")
+        print(f" Saved: {output_file}")
     plt.close()
 
 
-# === Execution ===
+# Execution
 #%%
 master_data_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
 output_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_SNR_0_20featall_ch_PC_contribution_scalp_plots"
@@ -221,7 +221,7 @@ roi_mapping = load_roi_mapping(roi_csv_path)
 for condition in conditions:
     ref_rec = load_snirf_for_geometry(ref_subject, condition, master_data_dir)
     if ref_rec is None:
-        print(f"⚠️ Could not load reference SNIRF for {condition}")
+        print(f" Could not load reference SNIRF for {condition}")
         continue
     for roi_name in roi_names:
         plot_single_roi_highlight(

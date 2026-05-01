@@ -11,8 +11,8 @@ per-channel fold-presence and importance summaries plus a per-subject
 hemisphere-level aggregate table.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 
   angular_gyrus_presence_<condition>.json
     Quick JSON stats: number of subjects with any Angular Gyrus channels, total unique channels, etc.
@@ -51,9 +51,7 @@ import pandas as pd
 # We also keep a more verbose fallback in case of earlier naming.
 ANGULAR_KEYWORDS = ("AngGyrus", "Angular Gyrus")  # order: specific -> generic
 
-# ---------------------------------------------------------------------------
 # ROI mapping
-# ---------------------------------------------------------------------------
 
 def load_roi_mapping(roi_csv: str) -> Dict[str, str]:
     try:
@@ -61,10 +59,10 @@ def load_roi_mapping(roi_csv: str) -> Dict[str, str]:
         if not {'channel_label', 'brodmann'}.issubset(df.columns):
             raise ValueError("ROI CSV must contain channel_label and brodmann columns")
         mapping = dict(zip(df['channel_label'].astype(str), df['brodmann'].astype(str)))
-        print(f"✓ Loaded ROI map ({len(mapping)} entries)")
+        print(f" Loaded ROI map ({len(mapping)} entries)")
         return mapping
     except Exception as e:
-        print(f"✗ Failed to load ROI CSV {roi_csv}: {e}")
+        print(f" Failed to load ROI CSV {roi_csv}: {e}")
         return {}
 
 
@@ -95,26 +93,22 @@ def hemisphere_from_region(region_name: str) -> str:
         return 'R'
     return 'U'
 
-# ---------------------------------------------------------------------------
 # JSON reading per subject-condition
-# ---------------------------------------------------------------------------
 
 def load_fold_importance(base_dir: str, subject_id: str, condition: str):
     path = os.path.join(base_dir, f"sub_{subject_id}_{condition}", 'dprime_pca_summary.json')
     if not os.path.exists(path):
-        print(f"  ✗ Missing {path}")
+        print(f"   Missing {path}")
         return None
     try:
         with open(path, 'r') as f:
             data = json.load(f)
         return data.get('overall_channel_importance_per_fold', [])
     except Exception as e:
-        print(f"  ✗ Error reading {path}: {e}")
+        print(f"   Error reading {path}: {e}")
         return None
 
-# ---------------------------------------------------------------------------
 # Core extraction
-# ---------------------------------------------------------------------------
 
 def extract_angular_channels(folds: List[List[dict]], roi_map: Dict[str, str]):
     """Return list of per-channel stats restricted to angular gyrus."""
@@ -154,9 +148,7 @@ def extract_angular_channels(folds: List[List[dict]], roi_map: Dict[str, str]):
     rows.sort(key=lambda r: (r['hemisphere'], -r['mean_importance_pct']))
     return rows
 
-# ---------------------------------------------------------------------------
 # CLI / main
-# ---------------------------------------------------------------------------
 
 def parse_args():
     p = argparse.ArgumentParser(description="Extract Angular Gyrus channel indices across folds.")
@@ -230,7 +222,7 @@ def main():
         else:
             print(f"  No Angular Gyrus channels found in any subject for {condition}.")
 
-    print("\n✅ Done (Angular Gyrus extraction).")
+    print("\n Done (Angular Gyrus extraction).")
 
 
 if __name__ == '__main__':

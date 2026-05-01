@@ -4,8 +4,8 @@ Group-level Brodmann ROI hemodynamic response — overt-orient condition (supple
 Variant of the group-level ROI script applied to the overt-orient task.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os
@@ -38,7 +38,6 @@ importlib.reload(pf)
 
 
 # %% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = False   # load saved rec/chs if available
 rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\overtorient_brodmann_snr0\\"
@@ -46,8 +45,8 @@ flag_save_preprocessed_data = True  # save rec/chs if we preprocess now
 flag_run_type = 'overtorient'  # 'overtorient' only for this script
 
 # DEBUG: Print to confirm what flag_run_type is being used
-print(f"🔍 DEBUG: flag_run_type is set to: '{flag_run_type}'")
-print(f"🔍 DEBUG: This should create folders like: sub_XX_{flag_run_type}")
+print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
+print(f" DEBUG: This should create folders like: sub_XX_{flag_run_type}")
 
 if flag_run_type.lower() == 'overtorient':
     selected_file_ids = ['overtorient_run-01','overtorient_run-02','overtorient_run-03']
@@ -183,9 +182,7 @@ overtorient-only analysis: load or preprocess overtorient runs (3 runs),
 compute block averages, ROI means, robust stats, and plots.
 """
 
-# ─────────────────────────────────────────────────────────────────────────────
 # 2.  Load overtorient and compute block averages
-# ─────────────────────────────────────────────────────────────────────────────
 stim_labels = {
     'overtorient' : ['overtorient Left', 'overtorient Right'],
 }
@@ -224,7 +221,7 @@ outdir.mkdir(parents=True, exist_ok=True)
 fname    = 'all_sub_conc_tddr_overtorient.pkl.gz'
 with gzip.open(outdir / fname, 'wb') as f:
     pickle.dump(ba_overtorient, f, protocol=pickle.HIGHEST_PROTOCOL)
-print(f'✔️  Saved overtorient block averages → {outdir/fname}')
+print(f'  Saved overtorient block averages → {outdir/fname}')
 
 
 
@@ -245,7 +242,7 @@ def collapse_runs(ba_list):
         out.append(da)
     return out
 
-# ── 2. ROI mean per subject (skip missing channels) ────────────────────────
+# 2. ROI mean per subject (skip missing channels)
 def roi_mean_per_subject(subj_avg_list):
     roi_ds = []
     for da in subj_avg_list:
@@ -300,7 +297,7 @@ def bonferroni_pvals_robust(subj_roi_list, win_sec=2.0, alpha=0.05, min_subjects
         subj_roi_filtered.append(da_filtered)
     
     if not subj_roi_filtered or len(roi_keep) == 0:
-        print("❌ No valid ROIs found!")
+        print(" No valid ROIs found!")
         return None, None, None
     
     da = xr.concat(subj_roi_filtered, dim="subj")
@@ -352,7 +349,7 @@ def get_significance_mask(pvals, alpha_corrected, n_valid, min_subjects=2):
     return sig_mask
 
 #%%
-# ── apply to each flavour ──────────────────────────────────────────────────
+# apply to each flavour
 subj_avg_overtorient = collapse_runs(ba_overtorient)
 
 #%%
@@ -361,7 +358,6 @@ subj_roi_overtorient = roi_mean_per_subject(subj_avg_overtorient)
 
 #%%
 # APPLY ROBUST STATISTICS TO ALL CONDITIONS
-# ========================================================================
 
 print("\n🔄 Applying robust statistics to overtorient...")
 
@@ -394,15 +390,15 @@ if pvals is not None:
         'sig_rate': 100 * significant / total_tests
     }
 
-    print(f"   ✅ Significant: {significant}/{total_tests} ({100*significant/total_tests:.1f}%)")
+    print(f"    Significant: {significant}/{total_tests} ({100*significant/total_tests:.1f}%)")
     
     if sig_mask.any():
         sig_n_valid = n_valid.where(sig_mask)
-        print(f"   📊 Subject counts: {sig_n_valid.min().item():.0f}-{sig_n_valid.max().item():.0f}")
+        print(f"    Subject counts: {sig_n_valid.min().item():.0f}-{sig_n_valid.max().item():.0f}")
 else:
-    print(f"   ❌ No valid results for {condition_name}")
+    print(f"    No valid results for {condition_name}")
 
-print(f"\n✅ Robust analysis complete for overtorient!")
+print(f"\n Robust analysis complete for overtorient!")
 
 
 
@@ -526,7 +522,7 @@ def _save_timeseries_bundle(
         # Fallback to scipy engine if netCDF4 isn't available
         print(f"NetCDF write default engine failed ({e}); retrying with engine='scipy'.")
         ds.to_netcdf(outpath, engine="scipy")
-    print(f"💾 Saved ROI time series bundle → {outpath}")
+    print(f" Saved ROI time series bundle → {outpath}")
     return outpath
 
 def plot_roi_group_robust(roi, robust_results, save_path=None):
@@ -674,14 +670,13 @@ def plot_roi_group_robust(roi, robust_results, save_path=None):
 
 # %%
 # ROBUST PLOTTING WITH SIGNIFICANCE HIGHLIGHTING
-# ========================================================================
 
-print("\n📊 Creating plots with significance highlighting (overtorient)...")
+print("\n Creating plots with significance highlighting (overtorient)...")
 
 # Set up save directory
 save_dir = Path("U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Group_avg_results\\figures_brodmann_overtorient")
 save_dir.mkdir(parents=True, exist_ok=True)
-print(f"📁 Saving figures to: {save_dir}")
+print(f" Saving figures to: {save_dir}")
 
 # Plot first 5 ROIs using the robust method
 for roi in all_rois:
@@ -689,7 +684,7 @@ for roi in all_rois:
     save_path = save_dir / f"HRF_robust_{roi}.png"
     plot_roi_group_robust(roi, robust_results, save_path=str(save_path))
 
-print("\n✅ overtorient plots created!")
+print("\n overtorient plots created!")
 print("   • Thick lines (width=8) indicate significant time series")
 print("   • Thin lines (width=1) for non-significant time series") 
 print("   • Both trial types (Left/Right) shown on same plot")
@@ -712,6 +707,6 @@ try:
         events=((0.0, "mov onset"), (3.0, "mov offset")),
     )
 except Exception as e:
-    print(f"⚠️ Failed to save NetCDF bundle: {e}")
+    print(f" Failed to save NetCDF bundle: {e}")
 
 # %%

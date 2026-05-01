@@ -7,8 +7,8 @@ the gaze time course with stimulus event markers overlaid. Missing files
 are skipped.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os
@@ -18,9 +18,7 @@ import matplotlib
 matplotlib.use("Agg")  # non-interactive backend for batch plotting
 import matplotlib.pyplot as plt
 
-# ============================================================
-# ==================== CONFIGURATION =========================
-# ============================================================
+# CONFIGURATION
 
 #%% SUBJECT LIST -- edit this list to process different subjects
 SUBJECTS = [
@@ -47,9 +45,7 @@ DATA_BASE = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research
 # OUTPUT DIRECTORY FOR PLOTS
 OUT_DIR = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data\derivatives\eye_tracking"
 
-# ============================================================
-# ==================== PLOTTING FUNCTION =====================
-# ============================================================
+# PLOTTING FUNCTION
 
 #%%
 def plot_one(subj, task, run):
@@ -60,7 +56,7 @@ def plot_one(subj, task, run):
     physio_path = os.path.join(nirs_dir, f"{id_str}_recording-eyetracking_physio.tsv")
     events_path = os.path.join(nirs_dir, f"{id_str}_events.tsv")
 
-    # --- check existence ---
+    # check existence
     if not os.path.isfile(physio_path):
         print(f"  [SKIP] Physio not found: {physio_path}")
         return False
@@ -68,12 +64,12 @@ def plot_one(subj, task, run):
         print(f"  [SKIP] Events not found: {events_path}")
         return False
 
-    # --- load data ---
+    # load data
     df_physio = pd.read_csv(physio_path, sep='\t')
     df_events = pd.read_csv(events_path, sep='\t')
     print(f"  Loaded {len(df_physio)} physio samples, {len(df_events)} events")
 
-    # --- plot ---
+    # plot
     fig, ax = plt.subplots(figsize=(14, 6))
 
     ax.plot(df_physio['timestamps'], df_physio['gaze2dX'],
@@ -109,7 +105,7 @@ def plot_one(subj, task, run):
 
     plt.tight_layout()
 
-    # --- save to subject-specific figures folder ---
+    # save to subject-specific figures folder
     subj_fig_dir = os.path.join(OUT_DIR, f"sub-{subj}", "figures")
     os.makedirs(subj_fig_dir, exist_ok=True)
     out_file = os.path.join(subj_fig_dir, f"{id_str}_gaze_with_events.png")
@@ -119,9 +115,7 @@ def plot_one(subj, task, run):
     return True
 
 
-# ============================================================
-# ==================== BATCH LOOP ============================
-# ============================================================
+# BATCH LOOP
 
 #%%
 if __name__ == "__main__":
@@ -144,7 +138,7 @@ if __name__ == "__main__":
                 traceback.print_exc()
                 summary["failed"].append(label)
 
-    # ---- SUMMARY ----
+    # SUMMARY
     print(f"\n{'='*60}")
     print("BATCH COMPLETE")
     print(f"{'='*60}")

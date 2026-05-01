@@ -9,8 +9,8 @@ per-fold accuracies. Used to derive the chance threshold that figure scripts
 overlay on accuracy time-series and scatter plots.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%% Imports
@@ -51,7 +51,6 @@ from sklearn.decomposition import PCA
 from scipy.ndimage import uniform_filter1d
 
 #%% Initial root directory and analysis parameters
-##############################################################################
 
 flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
 rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
@@ -59,8 +58,8 @@ flag_save_preprocessed_data = False
 flag_run_type = 'overt' # 'overt' or 'covert'f
 
 # DEBUG: Print to confirm what flag_run_type is being used
-print(f"🔍 DEBUG: flag_run_type is set to: '{flag_run_type}'")
-print(f"🔍 DEBUG: This should create folders like: sub_XX_{flag_run_type}")
+print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
+print(f" DEBUG: This should create folders like: sub_XX_{flag_run_type}")
 
 if flag_run_type.lower() == 'overt': 
     selected_file_ids = ['overt_run-01','overt_run-02']
@@ -84,7 +83,7 @@ cfg_dataset['filenm_lst'] = [
     ]
 
 
-# ── Trial-quality filtering via augmented events ──────────────────────
+# Trial-quality filtering via augmented events
 # Augmented events TSVs live in each subject's nirs/ folder.
 # The 'include' column (1 = good trial) is used to drop bad trials.
 flag_filter_trials = True   # set False to skip trial filtering entirely
@@ -197,7 +196,6 @@ cfg_blockavg = {
 cfg_erbmICA = {}
 
 #%% Load and preprocess the data
-##############################################################################
 
 # Load and preprocess the data
 #
@@ -326,7 +324,7 @@ if not flag_load_preprocessed_data:
                 pickle.dump(chs_pruned_subjs[subj_idx], f, protocol=pickle.HIGHEST_PROTOCOL)
             os.replace(prune_tmp, prune_file)
             
-            print(f"✓ Saved subject {subj_id}")
+            print(f" Saved subject {subj_id}")
         
         print(f"All subjects saved to: {outdir}")
         
@@ -381,7 +379,7 @@ def fit_glm_excluding_test(
 
     dm_masked = dm_full.copy(deep=True)
 
-    # ---- helper to get plain seconds ----------------------------------
+    # helper to get plain seconds
     def _to_s(coord):
         try:
             return coord.pint.to("s").values.astype(float)
@@ -391,7 +389,7 @@ def fit_glm_excluding_test(
     t_sec = _to_s(dm_masked.time)
     o_sec = _to_s(test_stim.onset)
 
-    # ---- build Boolean mask ------------------------------------------
+    # build Boolean mask
     rows = np.zeros_like(t_sec, bool)
     if method.lower() == "block":
         rows |= (t_sec >= o_sec.min() - before_s) & (t_sec <= o_sec.max() + after_s)
@@ -406,7 +404,7 @@ def fit_glm_excluding_test(
         aux_masked.values[rows, ...] = 0          # <-- add this line
     else:
         aux_masked = None
-    # ---- fit GLM ------------------------------------------------------
+    # fit GLM
     betas = glm.fit(
         ts,               # (channel, chromo, time)
         dm_masked,        # (time,    regressor, chromo)
@@ -568,7 +566,7 @@ def extract_single_trial_ts_two_regressors(
 
     seg_len = hrfL.sizes["time"]
 
-    # --- compute dt in seconds correctly for both timedelta and float64 times ---
+    # compute dt in seconds correctly for both timedelta and float64 times
     if np.issubdtype(times.dtype, np.timedelta64):
         dt = (times[1] - times[0]) / np.timedelta64(1, "s")
         dt = float(dt)
@@ -707,12 +705,12 @@ def sliding_window_classify(
             X_te_t = pca.transform(X_te_t)
         for name, clf in classifiers.items():
             clf.fit(X_tr_t, labels_train)
-            # --- Test accuracy ---
+            # Test accuracy
             y_pred = clf.predict(X_te_t)
             acc[name][w] = accuracy_score(labels_test, y_pred)
             bal_acc[name][w] = balanced_accuracy_score(labels_test, y_pred)
             preds_all[name].append(y_pred.copy())
-            # --- Training accuracy (OOB if available, else re-substitution) ---
+            # Training accuracy (OOB if available, else re-substitution)
             if hasattr(clf, 'oob_score_'):
                 train_acc[name][w] = clf.oob_score_
                 # Compute OOB balanced accuracy from OOB decision function
@@ -756,7 +754,7 @@ def fit_pca_from_moving_windows(ts_train, window_size, step_size, *, mode='varia
     pca.fit(X_scaled)
     return scaler, pca
 
-# --- New PCA helpers (timecourse-first) ---
+# New PCA helpers (timecourse-first)
 
 def fit_pca_on_full_timecourse(ts_train, *, n_components=20, scale=True):
     """Fit PCA on stacked timecourses (n_trials, n_channels, T) -> (n_trials*T, n_channels)."""
@@ -837,7 +835,7 @@ def good_channels(trials, labels, N, windowStartT, windowEndT, fs):
 # REMOVE MLflow configuration - using traditional file outputs only
 
 
-# ── global hyper-parameters ──────────────────────────────────────────
+# global hyper-parameters
 EPS_STOP          = 0.005   # 0.5-pp absolute accuracy threshold
 TOP_N_POOL        = 20
 INNER_SPLITS      = 3
@@ -908,9 +906,8 @@ def greedy_select(X_tr, y_tr, X_va, y_va,
             break
 
     return chosen, history
-# -------------------------------------------------------------------- #
 
-# ── Epoch-overlap diagnostic ─────────────────────────────────────────
+# Epoch-overlap diagnostic
 def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
                         verbose=True):
     """Detect temporal overlap between train and test epochs.
@@ -962,7 +959,7 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
     }
 
     if verbose and len(overlaps) > 0:
-        print(f"    ⚠ OVERLAP: {len(overlaps)} train-test epoch pairs share samples "
+        print(f"     OVERLAP: {len(overlaps)} train-test epoch pairs share samples "
               f"(out of {len(train_epochs)}×{len(test_epochs)} possible)")
         # summarize per-test-trial
         test_with_overlap = set((r, i) for _, _, r, i, _ in overlaps)
@@ -977,7 +974,6 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
 
 
 
-# ======================================================================
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 # define your classifiers once

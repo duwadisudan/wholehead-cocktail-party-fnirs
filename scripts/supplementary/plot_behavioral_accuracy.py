@@ -7,8 +7,8 @@ renders a per-subject scatter sorted by accuracy descending (overt = filled
 blue, covert = open red), and exports a CSV of incorrect-trial counts.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 import os

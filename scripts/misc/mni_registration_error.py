@@ -7,8 +7,8 @@ error per subject, renders 2D and 3D scalp visualisations of the error
 magnitude, and reports cross-subject variability statistics.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 from __future__ import annotations
 
@@ -20,9 +20,7 @@ from pathlib import Path
 from typing import List, Optional
 import pyvista as pv
 
-# ============================================
 # CONFIGURATION - MODIFY THESE
-# ============================================
 
 # List of subject IDs to include in analysis
 SUBJECT_IDS = [
@@ -59,9 +57,7 @@ SUBJECT_MNI_FILENAME = "just_mni.csv"
 # Number of channels expected
 N_CHANNELS = 567
 
-# ============================================
 # END CONFIGURATION
-# ============================================
 
 
 def load_template_mni(template_path: Path) -> np.ndarray:
@@ -244,9 +240,7 @@ def compute_subject_statistics(errors_df: pd.DataFrame) -> pd.DataFrame:
     return stats_df
 
 
-# ============================================
 # VISUALIZATION FUNCTIONS
-# ============================================
 
 def plot_2d_error_map(channel_stats: pd.DataFrame, output_path: Path) -> None:
     """Create 2D scatter plot showing registration error per channel.

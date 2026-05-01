@@ -11,8 +11,8 @@ overt RF decoding accuracy. Activation Reliability is defined as |μ|/σ where
 The all-channels variant is plotted alongside for reference.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%%
@@ -256,7 +256,7 @@ print(f"Final analysis (All channels Std): {len(analysis_df_all_std)} subjects w
 
 sns.set(style='whitegrid')
 
-# ============ ANGULAR GYRUS: 3 METRICS ============
+# ANGULAR GYRUS: 3 METRICS
 fig_ag, axes_ag = plt.subplots(1, 3, figsize=(18, 5))
 
 # Plot 1: AG SNR vs Accuracy
@@ -334,7 +334,7 @@ plt.savefig(plot_ag_path, dpi=300, bbox_inches='tight')
 plt.close(fig_ag)
 print(f'\nSaved Angular Gyrus plot: {plot_ag_path}')
 
-# ============ ALL CHANNELS: 3 METRICS ============
+# ALL CHANNELS: 3 METRICS
 fig_all, axes_all = plt.subplots(1, 3, figsize=(18, 5))
 
 # Plot 1: All Channels SNR vs Accuracy
@@ -561,7 +561,7 @@ def _draw_reliability_panel(ax, x_vals, y_vals, subj_ids, color, panel_letter,
     ax.text(-0.12, 1.05, panel_letter, transform=ax.transAxes,
             fontsize=_PUB_PANEL_FONT, fontweight='bold', va='top')
 
-# --- Panel A: All Channels ---
+# Panel A: All Channels
 _df_a = analysis_df_all_snr.dropna(subset=['all_ch_snr_mean', 'accuracy'])
 _draw_reliability_panel(
     ax_all,
@@ -575,7 +575,7 @@ _draw_reliability_panel(
     p_val=p_all_snr,
 )
 
-# --- Panel B: Angular Gyrus ---
+# Panel B: Angular Gyrus
 _df_b = analysis_df_ag_snr.dropna(subset=['ag_snr_mean', 'accuracy'])
 _draw_reliability_panel(
     ax_ag,

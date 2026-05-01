@@ -6,8 +6,8 @@ JSON summary, and assembles a tidy table of accuracies, latencies, and
 above-chance flags used by the Figure 4 scatter and latency-CI scripts.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 #%%
 import os

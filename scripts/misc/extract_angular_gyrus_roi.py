@@ -6,18 +6,15 @@ Filters the per-subject roi_master.csv to the Left/Right Angular Gyrus
 subject-specific scanner BA column. Writes per-subject anggyr_sub-XXX.csv.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 import pandas as pd
 from pathlib import Path
 
-# ============================================
 # CHANGE THIS FOR EACH SUBJECT
-# ============================================
 SUBJECT_ID = "sub-663"
-# ============================================
 
 # Define base paths
 base_dir = Path(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party")

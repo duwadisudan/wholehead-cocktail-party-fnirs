@@ -5,8 +5,8 @@ Reads the consolidated accuracy summary table and renders the per-subject
 covert scatter plot with chance-threshold band and identity reference line.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 import sys
 from whichscript import configure, enable_auto_logging
@@ -37,9 +37,7 @@ highlight_threshold = 62.3
 
 output_dir = os.path.dirname(csv_file)
 
-#########################################
 # Load & prepare data
-#########################################
 df = pd.read_csv(csv_file)
 print(f"Data loaded from: {csv_file}")
 print(f"Original data shape: {df.shape}")
@@ -78,9 +76,7 @@ df = df[~df['Subject'].str.strip().str.upper().isin(summary_labels_to_remove)].r
 numeric_cols = [c for c in df.columns if c != 'Subject' and pd.api.types.is_numeric_dtype(df[c])]
 print(f"Numeric columns detected: {numeric_cols}")
 
-#########################################
 # Prepare data for plotting
-#########################################
 plot_df = df.copy()
 
 # Map column names
@@ -120,14 +116,12 @@ plt.rcParams.update({
 # Colors
 covert_color = 'black'
 
-# ==============================================================================
 # SINGLE-PANEL LAYOUT:
 #   A  – Accuracy scatter (Covert only)
-# ==============================================================================
 
 fig_v, ax1_v = plt.subplots(1, 1, figsize=(7, 5))
 
-# --- PANEL A: Accuracy scatter (Covert only) ---
+# PANEL A: Accuracy scatter (Covert only)
 upper_chance = highlight_threshold  # 62.3%
 lower_chance = 41.46
 

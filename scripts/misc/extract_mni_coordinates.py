@@ -7,8 +7,8 @@ triplet into three standalone columns, and writes the result as a new CSV
 preparation prior to classifier training.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 from __future__ import annotations
 
@@ -18,11 +18,8 @@ import sys
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
-# ============================================
 # CHANGE THIS FOR EACH SUBJECT
-# ============================================
 SUBJECT_ID = "sub-663"
-# ============================================
 
 BASE_DIR = Path(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data")
 DEFAULT_SOURCE = BASE_DIR / SUBJECT_ID / "nirs" / "atlasviewer_mni" / "atlasviewer_cortex_projected_mni_scanner.csv"

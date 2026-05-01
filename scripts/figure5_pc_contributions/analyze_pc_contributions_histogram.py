@@ -9,8 +9,8 @@ ROIs, and computes group-level ROI mean and subject-frequency statistics.
 Produces the ROI-contribution histogram and the top-N ROI bar chart.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 #%%
@@ -43,16 +43,16 @@ plt.style.use('default')
 sns.set_palette('husl')
 
 
-# === ROI helpers (mirrors analyze_channel_stability_group_roi.py) ===
+# ROI helpers (mirrors analyze_channel_stability_group_roi.py)
 def load_roi_mapping(roi_csv_path: str) -> dict:
     """Load ROI mapping CSV into dict channel_label -> brodmann."""
     try:
         roi_df = pd.read_csv(roi_csv_path)
         roi_dict = dict(zip(roi_df['channel_label'], roi_df['brodmann']))
-        print(f"✓ Loaded ROI mapping for {len(roi_dict)} channels")
+        print(f" Loaded ROI mapping for {len(roi_dict)} channels")
         return roi_dict
     except Exception as e:
-        print(f"⚠️ Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
+        print(f" Warning: Could not load ROI mapping from {roi_csv_path}: {e}")
         print("   Proceeding with original channel names…")
         return {}
 
@@ -77,7 +77,7 @@ def get_display_name(channel_name: str, roi_mapping: dict) -> str:
     return channel_name
 
 
-# === Above-chance subject filtering ===
+# Above-chance subject filtering
 def load_above_chance_subjects(
     base_dir: str,
     conditions: list,
@@ -97,7 +97,7 @@ def load_above_chance_subjects(
     }
     result = {cond: set() for cond in conditions}
     if not os.path.exists(csv_path):
-        print(f"⚠️ final_table.csv not found at {csv_path} — above-chance filter disabled")
+        print(f" final_table.csv not found at {csv_path} — above-chance filter disabled")
         return result
     try:
         df = pd.read_csv(csv_path)
@@ -108,20 +108,20 @@ def load_above_chance_subjects(
                 None,
             )
             if col is None:
-                print(f"⚠️ No accuracy column found for '{cond}' in final_table.csv — skipping filter")
+                print(f" No accuracy column found for '{cond}' in final_table.csv — skipping filter")
                 continue
             df[col] = pd.to_numeric(df[col], errors='coerce')
             above = df.loc[df[col] > threshold, 'Subject']
             # zero-pad to match subject ID format used elsewhere
             result[cond] = {str(int(s)).zfill(2) for s in above if s.isdigit()}
-            print(f"✓ Above-chance subjects for {cond} (>{threshold}%): "
+            print(f" Above-chance subjects for {cond} (>{threshold}%): "
                   f"{sorted(result[cond])} ({len(result[cond])}/{len(df)})")
     except Exception as e:
-        print(f"✗ Error loading final_table.csv: {e} — above-chance filter disabled")
+        print(f" Error loading final_table.csv: {e} — above-chance filter disabled")
     return result
 
 
-# === Load and aggregate per-subject/condition contributions ===
+# Load and aggregate per-subject/condition contributions
 def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: str):
     """Load overall channel importance per fold for a subject-condition.
 
@@ -135,7 +135,7 @@ def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: st
     sub_folder = f"sub_{subject_id}_{condition}"
     json_path = os.path.join(base_dir, sub_folder, 'dprime_pca_summary.json')
     if not os.path.exists(json_path):
-        print(f"✗ Missing: {json_path}")
+        print(f" Missing: {json_path}")
         return [], {}
     try:
         with open(json_path, 'r') as f:
@@ -154,10 +154,10 @@ def load_subject_condition_contrib(base_dir: str, subject_id: str, condition: st
             'pca_variance_threshold': data.get('pca_variance_threshold'),
             'n_outer_folds': len(folds),
         }
-        print(f"✓ Loaded {len(folds)} folds for sub-{subject_id} {condition}")
+        print(f" Loaded {len(folds)} folds for sub-{subject_id} {condition}")
         return folds, meta
     except Exception as e:
-        print(f"✗ Error reading {json_path}: {e}")
+        print(f" Error reading {json_path}: {e}")
         return [], {}
 
 
@@ -258,11 +258,11 @@ def aggregate_group_roi_contrib(subject_roi_tables):
     return group_df
 
 
-# === Plotting ===
+# Plotting
 def create_group_roi_plots(df: pd.DataFrame, output_dir: str, top_n: int = 12):
     os.makedirs(output_dir, exist_ok=True)
     if df is None or df.empty:
-        print("⚠️ No data to plot.")
+        print(" No data to plot.")
         return
 
     # Publication font/style constants (mirrors table_maker_scatter_overt_only_pub_latency_CI.py)
@@ -370,10 +370,9 @@ def main():
     output_base_dir = r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Classifier_script_results\\RF_above_chance_group_roi_contributions"
     roi_csv_path = r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\ROIs\\roi_master.csv"
 
-    # ── Above-chance filtering ──────────────────────────────────────────────
+    # Above-chance filtering
     flag_above_chance_only = True   # set False to include all subjects
     above_chance_threshold = 61.67  # same threshold used in table_maker_scatter
-    # ────────────────────────────────────────────────────────────────────────
 
     roi_mapping = load_roi_mapping(roi_csv_path)
 
@@ -384,14 +383,14 @@ def main():
     )
 
     for condition in conditions:
-        print(f"\n🔍 Group ROI contributions for {condition}")
+        print(f"\n Group ROI contributions for {condition}")
         allowed_subjects = above_chance_subjects.get(condition, set(subjects))
         if flag_above_chance_only:
             print(f"   (above-chance filter ON — {len(allowed_subjects)} subjects)")
         subject_tables = []
         for sid in subjects:
             if sid not in allowed_subjects:
-                print(f"   ⏭ Skipping sub-{sid} (below chance for {condition})")
+                print(f"    Skipping sub-{sid} (below chance for {condition})")
                 continue
             folds, _ = load_subject_condition_contrib(base_dir, sid, condition)
             if not folds:
@@ -400,22 +399,22 @@ def main():
             subject_tables.append((sid, df_subj))
 
         if not subject_tables:
-            print(f"❌ No data found for condition {condition}")
+            print(f" No data found for condition {condition}")
             continue
 
         group_df = aggregate_group_roi_contrib(subject_tables)
         out_dir = os.path.join(output_base_dir, f"group_{condition}_roi_contrib")
-        print(f"📈 Creating plots → {out_dir}")
+        print(f" Creating plots → {out_dir}")
         create_group_roi_plots(group_df, out_dir, top_n=10)
-        print(f"💾 Saving CSV/JSON summaries → {out_dir}")
+        print(f" Saving CSV/JSON summaries → {out_dir}")
         save_group_outputs(group_df, subject_tables, out_dir)
 
         if group_df is not None and not group_df.empty:
-            print(f"\n🏆 TOP 10 ROIs for {condition}:")
+            print(f"\n TOP 10 ROIs for {condition}:")
             for i, r in group_df.head(10).iterrows():
                 print(f" {i+1:2d}. {r['roi_name']:<25s} | mean %: {r['mean_importance']:.2f} | subj freq: {r['subject_frequency']:.0%}")
 
-    print("\n✅ Done.")
+    print("\n Done.")
 
 
 if __name__ == '__main__':

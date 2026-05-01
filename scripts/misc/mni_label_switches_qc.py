@@ -8,8 +8,8 @@ and produces a per-subject report of (a) total label switches and
 Angular Gyrus → Supramarginal Gyrus). Used as a registration QC step.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 from __future__ import annotations
 
@@ -18,9 +18,7 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 from collections import defaultdict
 
-# ============================================
 # CONFIGURATION - MODIFY THESE
-# ============================================
 
 # List of subject IDs to include in analysis
 SUBJECT_IDS = [
@@ -46,9 +44,7 @@ BASE_DIR = Path(
 # Output directory
 OUTPUT_DIR = BASE_DIR / "derivatives" / "mni_label_switch_report"
 
-# ============================================
 # END CONFIGURATION
-# ============================================
 
 # IPL regions (Inferior Parietal Lobule)
 IPL_KEYWORDS = ["AngGyrus", "SupramargGyr"]

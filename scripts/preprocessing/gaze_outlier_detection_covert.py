@@ -9,8 +9,8 @@ whose sub-window gaze exceeds the outlier threshold. Outputs per-run CSV
 of outlier trial indices and a diagnostic figure.
 
 Author: Sudan Duwadi <sudan@bu.edu>
-Notes: Code refactoring was AI-assisted; all scientific decisions and
-       accountability remain with the author.
+Notes: Code refactoring, documentation, and commenting were AI-assisted;
+       all scientific decisions and accountability remain with the author.
 """
 
 import os
@@ -22,9 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
 from scipy.interpolate import interp1d
 
-# ============================================================
-# ==================== CONFIGURATION =========================
-# ============================================================
+# CONFIGURATION
 
 SUBJECTS = [
 '37','38','42','45','48','49','50','51'
@@ -87,9 +85,7 @@ NEON_HEIGHT  = 1200   # px
 NEON_FOV_X   = 103.0  # degrees horizontal
 NEON_FOV_Y   = 77.0   # degrees vertical
 
-# ============================================================
-# ==================== HELPERS ===============================
-# ============================================================
+# HELPERS
 
 def pixel_to_gaze_angles(x_px, y_px=None,
                          width=NEON_WIDTH, height=NEON_HEIGHT,
@@ -280,9 +276,7 @@ def detect_outlier(epoch, side, params, fs=SAMPLING_RATE, pre_s=PRE_CUE):
     return False
 
 
-# ============================================================
-# ==================== MAIN ==================================
-# ============================================================
+# MAIN
 
 def process_run(subj, task, run):
     """Process a single run: detect outlier trials, save results + figure."""
@@ -299,7 +293,7 @@ def process_run(subj, task, run):
         print(f"  [SKIP] Missing events: {events_tsv}")
         return None
 
-    # ---- Load ----
+    # Load
     df_physio = pd.read_csv(physio_tsv, sep='\t')
     df_events = pd.read_csv(events_tsv, sep='\t')
 
@@ -326,25 +320,25 @@ def process_run(subj, task, run):
 
     print(f"  {len(onsets)} trials ({left_mask.sum()} left, {right_mask.sum()} right)")
 
-    # ---- Preprocess ----
+    # Preprocess
     t_u, gaze_filt = preprocess_gaze(timestamps, gaze_x_raw)
 
-    # ---- Convert pixels → degrees (FOV-based pinhole model) ----
+    # Convert pixels → degrees (FOV-based pinhole model)
     gaze_deg_raw, _, _ = pixel_to_gaze_angles(gaze_filt)
 
-    # ---- Baseline-correct in degree space ----
+    # Baseline-correct in degree space
     baseline = compute_baseline(t_u, gaze_deg_raw, onsets)
     gaze_deg = gaze_deg_raw - baseline
     print(f"  Baseline (degrees): {baseline:.2f}°")
 
-    # ---- Get task-specific outlier params ----
+    # Get task-specific outlier params
     task_key = task.lower()
     if task_key not in OUTLIER_PARAMS:
         print(f"  [WARN] No outlier params for task '{task}', using overt defaults")
         task_key = "overt"
     params = OUTLIER_PARAMS[task_key]
 
-    # ---- Epoch & detect outliers ----
+    # Epoch & detect outliers
     n_epoch = int(SAMPLING_RATE * (PRE_CUE + POST_CUE))
     outlier_indices = []     # 1-based trial index in original order
     epochs_left  = []
@@ -371,7 +365,7 @@ def process_run(subj, task, run):
     n_outliers = len(outlier_indices)
     print(f"  Outliers: {n_outliers}/{len(onsets)}  indices={outlier_indices}")
 
-    # ---- Figure: epoch plot with outliers ----
+    # Figure: epoch plot with outliers
     # Plot from -1 s to +6 s post-onset
     plot_pre  = 1.0        # 1 s before onset
     plot_post = 6.0        # 6 s after onset
@@ -432,7 +426,6 @@ def process_run(subj, task, run):
     }
 
 
-# ============================================================
 if __name__ == "__main__":
     os.makedirs(OUT_DIR, exist_ok=True)
     os.makedirs(MASTER_DIR, exist_ok=True)
@@ -458,7 +451,7 @@ if __name__ == "__main__":
                 import traceback
                 traceback.print_exc()
 
-    # ---- Per-subject / per-task CSVs (matches Tobii format) ----
+    # Per-subject / per-task CSVs (matches Tobii format)
     for (subj, task), rows in per_subj_task.items():
         subj_out = os.path.join(OUT_DIR, f"sub-{subj}")
         os.makedirs(subj_out, exist_ok=True)
@@ -475,7 +468,7 @@ if __name__ == "__main__":
         df_subj.to_csv(master_path, index=False)
         print(f"  Saved: {master_path}")
 
-    # ---- Combined summary CSV (all subjects) ----
+    # Combined summary CSV (all subjects)
     if all_results:
         df_out = pd.DataFrame(all_results)
         csv_path = os.path.join(OUT_DIR, "gaze_outlier_results.csv")
