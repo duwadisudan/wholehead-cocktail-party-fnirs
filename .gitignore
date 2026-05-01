@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+*.egg
+build/
+dist/
+pip-wheel-metadata/
+
+# Virtual envs / installer artifacts
+.venv/
+venv/
+env/
+.python-version
+
+# Notebooks
+.ipynb_checkpoints/
+
+# IDE / local tooling
+.vscode/
+.idea/
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+*.swp
+*.swo
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Project-specific: data is downloaded from OpenNeuro / Zenodo, not tracked in git
+data/raw/
+data/derivatives/
+
+# Project-specific: scratch / runtime outputs
+output/
+tmp/
+tmp*
+*.log
+
+# Project-specific: env files
+.env
+.envrc

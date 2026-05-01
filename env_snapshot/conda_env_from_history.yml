@@ -1,0 +1,56 @@
+﻿name: cedalion
+channels:
+  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+  - https://repo.anaconda.com/pkgs/msys2
+dependencies:
+  - click=8.1
+  - h5py=3.11
+  - hatch-vcs
+  - hatchling
+  - ipympl
+  - ipython=8.13.2
+  - ipywidgets=8.1.2
+  - jupyter
+  - jupyter_client=7.4.9
+  - matplotlib=3.9
+  - myst-parser
+  - nbsphinx
+  - nbstripout
+  - nibabel=5.2
+  - nilearn=0.10
+  - notebook=6.5.4
+  - numpy=1.26
+  - opencv
+  - pandas=2.2
+  - pint-xarray=0.3
+  - pip
+  - pooch=1.8
+  - pre_commit
+  - pybids=0.16
+  - pyqt
+  - pytest
+  - pytest-cov
+  - python=3.11
+  - pyvista=0.44
+  - pywavelets=1.6
+  - ruff
+  - scikit-image=0.24
+  - scikit-learn=1.5
+  - scipy=1.14
+  - seaborn=0.13
+  - sphinx
+  - sphinx-autoapi
+  - sphinx-autodoc-typehints
+  - sphinx_rtd_theme=2.0.0
+  - statsmodels=0.14
+  - strenum=0.4
+  - trame-components=2.3
+  - trame-vtk=2.8
+  - trame-vuetify=2.6
+  - trame=3.6
+  - trimesh=4.4
+  - vtk=9.2.6
+  - xarray=2024.6
+prefix: C:\Users\duwad\anaconda3\envs\cedalion

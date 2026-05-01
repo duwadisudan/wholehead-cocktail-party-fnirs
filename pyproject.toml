@@ -1,0 +1,15 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wholehead-cocktail-party"
+version = "0.1.0"
+description = "Publication code for fNIRS spatial-attention decoding using Random Forest"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "Sudan Duwadi", email = "sudan@bu.edu" }]
+license = { text = "MIT" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wholehead_cocktail_party"]
