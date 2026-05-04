@@ -251,7 +251,6 @@ A full per-figure recipe and a single end-to-end driver will be added in
 ```
 .
 ├── README.md                          # this file
-├── CLAUDE.md                          # AI-assistant rules for contributors
 ├── pyproject.toml                     # makes src/ importable
 ├── environment.yml                    # pinned conda env
 ├── env_snapshot/                      # raw env snapshots used to build environment.yml
@@ -308,14 +307,3 @@ resolves to the published paper and the archived release DOI.
 Please [open an issue](https://github.com/duwadisudan/wholehead-cocktail-party-fnirs/issues)
 for bugs, install failures, or anything that does not reproduce. For
 questions about the science, contact Sudan Duwadi (sudan@bu.edu).
-
----
-
-## AI assistance disclosure
-
-Portions of this codebase — including refactoring, documentation, comments,
-and parts of this README — were developed with AI assistance (Anthropic
-Claude). All scientific decisions, analysis parameters, and accountability
-for the results remain with the authors. Detailed disclosure is provided in
-the Methods / Acknowledgments of the manuscript per Nature's policy on
-generative-AI use.
