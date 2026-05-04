@@ -1,16 +1,14 @@
 # Conda environment for the wholehead-cocktail-party publication code.
-# Pinned to match the environment used to produce the paper figures.
-# Built from cedalion/environment_dev.yml plus this project's extras.
+# Pinned to the build that produced the paper figures.
 #
-# To use:
+# Setup (from the repo root):
 #   conda env create -f environment.yml
 #   conda activate cedalion
 #   pip install -e ./cedalion
-#   pip install -e ./whichscript
+#   pip install -e ./whichscript    # optional, for output provenance
 #   pip install -e .
 #
-# Do NOT loosen pins to fix solver problems — pins are part of the
-# reproducibility contract (see CLAUDE.md).
+# Do not loosen the pins. They are part of the reproducibility contract.
 
 name: cedalion
 channels:
