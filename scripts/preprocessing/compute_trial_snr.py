@@ -33,13 +33,24 @@ from cedalion import units
 import warnings
 
 from wholehead_cocktail_party import processing_func as pf
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Cohort of subjects with both overt and covert runs. Override via run.yml.
+_DEFAULT_COHORT = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
 
 warnings.filterwarnings('ignore')
 
 #%% Configuration
 
-# Run type: 'overt' or 'covert'
-flag_run_type = 'overt'  # Change to 'covert' as needed
+# Run type from config/run.yml. Edit the file, do not edit here.
+flag_run_type = _RUN.condition
 
 print(f" Run type: '{flag_run_type}'")
 
@@ -55,14 +66,14 @@ else:
 
 # Dataset configuration
 cfg_dataset = {
-    'root_dir': 'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data',
-    'subj_ids' : ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47'],
+    'root_dir': str(_PATHS.raw_root),
+    'subj_ids' : resolve_subjects(_RUN, _DEFAULT_COHORT),
     'file_ids': selected_file_ids,
     'subj_id_exclude': [],
 }
 
 # Directories
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
+rootDir_saveData = str(_PATHS.derivatives_root) + os.sep
 preprocessed_dir = os.path.join(rootDir_saveData, f"preprocessed_{flag_run_type}_snr_0")
 
 # SNR calculation parameters

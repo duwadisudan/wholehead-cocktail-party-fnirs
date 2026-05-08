@@ -1,10 +1,14 @@
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "derivatives_root", "classifier_results_root", "group_avg_results_root", "roi_csv")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=True,
@@ -80,7 +84,7 @@ import importlib
 importlib.reload(pf)
 
 #%% Parameters (copied from group_level_brodmann.py and RF_snr_0.py)
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
+rootDir_saveData = str(_PATHS.derivatives_root) + os.sep
 
 # Subject IDs (same as group_level_brodmann.py - note: use 21 subjects that have control data)
 subj_ids_overt_control = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
@@ -90,7 +94,7 @@ TIME_WINDOW_START = 3.0  # seconds
 TIME_WINDOW_END = 12.0   # seconds (changed from 10 to 12)
 
 # Output/cache settings
-output_dir = Path("U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Group_avg_results\\scatter_above_chance_top5")
+output_dir = _PATHS.group_avg_results_root / "scatter_above_chance_top5"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 # Cache only what is needed for plotting the condensed top-5 figures
@@ -101,7 +105,7 @@ PLOTTING_CACHE_PATH = output_dir / "top5_plotting_data.pkl"
 RUN_ONLY_TOP5 = True
 
 #%% Load ROI definitions (copied from group_level_brodmann.py)
-roi_df = pd.read_csv(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv")
+roi_df = pd.read_csv(_PATHS.roi_csv)
 roi_dict = {
     roi: roi_df.loc[roi_df.brodmann == roi, "channel_label"].to_list()
     for roi in roi_df.brodmann.unique()
@@ -182,7 +186,7 @@ def load_top_n_rois_from_pc_contrib(csv_path, top_n=5):
         return set(), {}
 
 # Load top 10 ROIs from overt PC contribution analysis
-pc_contrib_overt_csv = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_group_roi_contributions\group_overt_roi_contrib\roi_contrib_group_summary.csv"
+pc_contrib_overt_csv = str(_PATHS.classifier_results_root / "RF_above_chance_group_roi_contributions" / "group_overt_roi_contrib" / "roi_contrib_group_summary.csv")
 
 print("\n Loading top ROIs from PC contribution analysis for annotation...")
 TOP_ROIS_FOR_ANNOTATION, TOP_ROIS_NORM_TO_ORIG = load_top_n_rois_from_pc_contrib(pc_contrib_overt_csv, top_n=5)
@@ -217,7 +221,7 @@ TOP_ROI_COLOR_MAP = {
 }
 print(f"\n Global ROI color mapping (base names):")
 for roi_base, color in TOP_ROI_COLOR_MAP.items():
-    print(f"   {roi_base} → {color}")
+    print(f"   {roi_base} -> {color}")
 
 #%% Helper functions (copied exactly from RF_snr_0.py for data loading)
 
@@ -257,7 +261,7 @@ def _blockavg_all_runs(rec, stim_list,
                        ts_name='conc_p_tddr_filt_postglm',
                        t_pre=2*units.s,
                        t_post=15*units.s):
-    """Return nested list [subj][run] of block‑average DataArrays."""
+    """Return nested list [subj][run] of block-average DataArrays."""
     out = [[None]*len(rec[0]) for _ in range(len(rec))]
     for s_idx in range(len(rec)):
         for r_idx in range(len(rec[s_idx])):
@@ -767,7 +771,7 @@ if not RUN_ONLY_TOP5:
                     ring_color = TOP_ROI_COLOR_MAP.get(_base_roi_name(original_roi_name), '#000000')
                     label = full_roi.replace('Left-', '').replace('Right-', '')
                     top_roi_data.append((x, y, label, ring_color, original_roi_name))
-                    print(f"      Top ROI: {label} → {ring_color}")
+                    print(f"      Top ROI: {label} -> {ring_color}")
         
             print(f"   Found {len(top_roi_data)} top PC contributor ROIs for {hemisphere} hemisphere, {trial_side} trial")
         
@@ -848,7 +852,7 @@ if not RUN_ONLY_TOP5:
     print("  4. No text clutter on the plot - just visual color matching")
     print()
     if TOP_ROIS_FOR_ANNOTATION:
-        print(f"  📌 Top-5 ROIs to annotate: {TOP_ROIS_FOR_ANNOTATION}")
+        print(f"   Top-5 ROIs to annotate: {TOP_ROIS_FOR_ANNOTATION}")
     else:
         print("    No top ROIs loaded - no annotations will be added")
     print()
@@ -871,7 +875,7 @@ if not RUN_ONLY_TOP5:
                                        x_label='Overt', y_label='Control',
                                        hemisphere=hemi, trial_side=trial,
                                        save_path=str(save_path))
-        print(f" Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
+        print(f" Saved {hemi} hemisphere, {trial} trial -> {save_path.name}")
 
     print(f"\n Overt vs Control plots saved to: {overt_control_dir}")
 
@@ -885,7 +889,7 @@ if not RUN_ONLY_TOP5:
                                        x_label='Overt', y_label='Covert',
                                        hemisphere=hemi, trial_side=trial,
                                        save_path=str(save_path))
-        print(f" Saved {hemi} hemisphere, {trial} trial → {save_path.name}")
+        print(f" Saved {hemi} hemisphere, {trial} trial -> {save_path.name}")
 
     print(f"\n Overt vs Covert plots saved to: {overt_covert_dir}")
 
@@ -966,7 +970,7 @@ if not RUN_ONLY_TOP5:
     
         # Formatting
         ax.set_xlabel("Time (s)", fontsize=22)
-        ax.set_ylabel("HbO Concentration Change (μM·mm)", fontsize=22)
+        ax.set_ylabel("HbO Concentration Change (muM·mm)", fontsize=22)
         ax.legend(fontsize=22, loc='best')
         ax.grid(True, linestyle=':', alpha=0.4)
         ax.tick_params(labelsize=20)
@@ -1077,12 +1081,12 @@ if not RUN_ONLY_TOP5:
     print(f"  - max_values_control.json: Max values for Control condition")
     print(f"  - scatter_plots/")
     print(f"      • scatter_ALL_ROIS_overt_vs_control.png: Combined plot (all ROIs, Overt vs Control)")
-    print(f"      • overt_vs_control_main/  ←  OVERT vs CONTROL PLOTS")
+    print(f"      • overt_vs_control_main/  <-  OVERT vs CONTROL PLOTS")
     print(f"          - scatter_LEFT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_LEFT_HEMI_RIGHT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_RIGHT_TRIAL.png")
-    print(f"      • overt_vs_covert_main/  ←  OVERT vs COVERT PLOTS")
+    print(f"      • overt_vs_covert_main/  <-  OVERT vs COVERT PLOTS")
     print(f"          - scatter_LEFT_HEMI_LEFT_TRIAL.png")
     print(f"          - scatter_LEFT_HEMI_RIGHT_TRIAL.png")
     print(f"          - scatter_RIGHT_HEMI_LEFT_TRIAL.png")
@@ -1091,7 +1095,7 @@ if not RUN_ONLY_TOP5:
     print(f"  - hrf_plots_control/: HRF plots with max markers for Control")
     print(f"  - overt_vs_control_summary.csv: Summary table with all max values")
 
-    print(f"\n📍 Annotation Strategy:")
+    print(f"\n Annotation Strategy:")
     print(f"   Color-coded rings: Red, Blue, Green, Purple, Orange")
     print(f"   Legend with matching ring colors shows ROI names")
     print(f"   Clean visualization - no text on data points")
@@ -1347,33 +1351,33 @@ OC_XLIM = (-5, 11)
 OC_YLIM = (-6,8)
 
 # Plot 1: Overt vs Control - Left Hemisphere
-print("\n1️⃣ Overt vs Control - Left Hemisphere")
+print("\n1 Overt vs Control - Left Hemisphere")
 save_path = top5_dir / "top5_overt_vs_control_LEFT_HEMI.png"
 create_top5_condensed_scatter(max_vals_overt, max_vals_control,
-                              x_label='Overt Δ[HbO] (μM·mm)',
-                              y_label='Visual Orientation Δ[HbO] (μM·mm)',
+                              x_label='Overt Delta[HbO] (muM·mm)',
+                              y_label='Visual Orientation Delta[HbO] (muM·mm)',
                               hemisphere='left',
                               save_path=str(save_path),
                               add_dotted_trial_connector=True,
                               tick_step=step_overt_control)
 
 # Plot 2: Overt vs Control - Right Hemisphere
-print("\n2️⃣ Overt vs Control - Right Hemisphere")
+print("\n2 Overt vs Control - Right Hemisphere")
 save_path = top5_dir / "top5_overt_vs_control_RIGHT_HEMI.png"
 create_top5_condensed_scatter(max_vals_overt, max_vals_control,
-                              x_label='Overt Δ[HbO] (μM·mm)',
-                              y_label='Visual Orientation Δ[HbO] (μM·mm)',
+                              x_label='Overt Delta[HbO] (muM·mm)',
+                              y_label='Visual Orientation Delta[HbO] (muM·mm)',
                               hemisphere='right',
                               save_path=str(save_path),
                               add_dotted_trial_connector=True,
                               tick_step=step_overt_control)
 
 # Plot 3: Overt vs Covert - Left Hemisphere
-print("\n3️⃣ Overt vs Covert - Left Hemisphere")
+print("\n3 Overt vs Covert - Left Hemisphere")
 save_path = top5_dir / "top5_overt_vs_covert_LEFT_HEMI.png"
 create_top5_condensed_scatter(max_vals_overt, max_vals_covert,
-                              x_label='Overt\nΔ[HbO] (μM·mm)',
-                              y_label='Covert\nΔ[HbO] (μM·mm)',
+                              x_label='Overt\nDelta[HbO] (muM·mm)',
+                              y_label='Covert\nDelta[HbO] (muM·mm)',
                               hemisphere='left',
                               save_path=str(save_path),
                               add_dotted_trial_connector=True,
@@ -1384,11 +1388,11 @@ create_top5_condensed_scatter(max_vals_overt, max_vals_covert,
                               tick_fontsize=42)
 
 # Plot 4: Overt vs Covert - Right Hemisphere
-print("\n4️⃣ Overt vs Covert - Right Hemisphere")
+print("\n4 Overt vs Covert - Right Hemisphere")
 save_path = top5_dir / "top5_overt_vs_covert_RIGHT_HEMI.png"
 create_top5_condensed_scatter(max_vals_overt, max_vals_covert,
-                              x_label='Overt\nΔ[HbO] (μM·mm)',
-                              y_label='Covert\nΔ[HbO] (μM·mm)',
+                              x_label='Overt\nDelta[HbO] (muM·mm)',
+                              y_label='Covert\nDelta[HbO] (muM·mm)',
                               hemisphere='right',
                               save_path=str(save_path),
                               add_dotted_trial_connector=True,
@@ -1457,7 +1461,7 @@ def create_standalone_legend(save_dir):
     plt.close(fig)
 
 
-print("\n📄 Creating standalone legend...")
+print("\n Creating standalone legend...")
 create_standalone_legend(top5_dir)
 
 #%%

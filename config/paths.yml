@@ -1,0 +1,48 @@
+# config/paths.yml
+#
+# Local paths for the wholehead-cocktail-party publication code.
+# Edit each value below to match your machine, then save.
+# Forward slashes work on Mac, Linux, and Windows; pathlib normalizes them.
+#
+# After editing, you can verify with:
+#   python -c "from wholehead_cocktail_party.paths import load_paths; print(load_paths())"
+
+# ---------------------------------------------------------------------------
+# Required for full-mode reproduction (raw -> preprocess -> classify -> figures)
+# ---------------------------------------------------------------------------
+
+# BIDS-formatted raw NIRS data (from OpenNeuro for full mode).
+# Contains sub-XX/nirs/sub-XX_task-...nirs files.
+raw_root: "EDIT_ME/Cocktail_party_whole_head_master_data"
+
+# Preprocessed derivatives (per-subject pickles produced by preprocessing,
+# consumed by classification). For moderate mode, populate from Zenodo.
+# In the original lab layout this lives at <raw_root>/derivatives/processed_data,
+# but it does not have to.
+derivatives_root: "EDIT_ME/Cocktail_party_whole_head_master_data/derivatives/processed_data"
+
+# Classifier outputs (per-subject results, nested/, permutation/,
+# angular_gyrus_channels_*, ...). For fast mode, populate from Zenodo.
+# Read by figure scripts; written by classification scripts.
+classifier_results_root: "EDIT_ME/Classifier_script_results"
+
+# Group-averaged figures saved by supplementary/group_level_*.py.
+group_avg_results_root: "EDIT_ME/Group_avg_results"
+
+# Full path to the ROI master CSV (channel -> Brodmann/region table).
+roi_csv: "EDIT_ME/ROIs/roi_master.csv"
+
+# ---------------------------------------------------------------------------
+# Optional
+# ---------------------------------------------------------------------------
+
+# Provenance archive used by the optional `whichscript` package. If left null,
+# defaults to <derivatives_root>/whichscript_archive — reviewers do not need
+# to set this. Only used if whichscript is installed (see README step 4).
+whichscript_archive: null
+
+# Lab-wide research-projects root. Used by a small number of QC and
+# supplementary scripts that read shared lab resources outside this project
+# (gaze CSVs, MNI registration QC, behavioral data). Reviewers reproducing
+# only the main figures can leave this as EDIT_ME.
+lab_research_root: "EDIT_ME"

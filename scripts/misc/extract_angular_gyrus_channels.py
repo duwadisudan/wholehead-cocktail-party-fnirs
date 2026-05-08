@@ -46,6 +46,10 @@ import os
 from typing import Dict, List, Tuple
 import pandas as pd
 
+from wholehead_cocktail_party.paths import load_paths
+
+_PATHS = load_paths()
+
 # Keywords appearing in the ROI CSV for Angular Gyrus.
 # User clarified they appear as "L-AngGyrus" / "R-AngGyrus".
 # We also keep a more verbose fallback in case of earlier naming.
@@ -153,17 +157,17 @@ def extract_angular_channels(folds: List[List[dict]], roi_map: Dict[str, str]):
 def parse_args():
     p = argparse.ArgumentParser(description="Extract Angular Gyrus channel indices across folds.")
     p.add_argument('--base-dir', type=str, required=False,
-                   default=r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Classifier_script_results\\nested\\rf_snr_0_20feat_balanced_depth5_oob",
+                   default=str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob"),
                    help='Base directory with sub_<ID>_<condition> result folders.')
     p.add_argument('--roi-csv', type=str, required=False,
-                   default=r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\ROIs\\roi_master.csv",
+                   default=str(_PATHS.roi_csv),
                    help='ROI mapping CSV (channel_label, brodmann).')
     p.add_argument('--subjects', nargs='*', default=['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47'],
                    help='Subject IDs to process.')
     p.add_argument('--conditions', nargs='*', default=['overt','covert'],
                    help='Conditions (folder suffix).')
     p.add_argument('--out-dir', type=str, required=False,
-                   default=r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Classifier_script_results\\angular_gyrus_channels_snr_0_20feat_balanced_depth5_oob",
+                   default=str(_PATHS.classifier_results_root / "angular_gyrus_channels_snr_0_20feat_balanced_depth5_oob"),
                    help='Output base directory.')
     return p.parse_args()
 

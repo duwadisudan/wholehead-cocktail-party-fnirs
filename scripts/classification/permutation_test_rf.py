@@ -28,6 +28,19 @@ import matplotlib.pyplot as plt
 
 import sys
 from wholehead_cocktail_party import processing_func as pf
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root", "classifier_results_root")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Default cohort for the permutation test. Existing setup runs on a single
+# subject (sub-10) since 1000 permutations per subject is expensive; widen
+# via config/run.yml's `subjects` field if you want a larger cohort.
+_DEFAULT_COHORT = ['10']
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -52,10 +65,12 @@ from scipy.ndimage import uniform_filter1d
 
 #%% Initial root directory and analysis parameters
 
-flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
+# Pipeline mode and condition come from config/run.yml. require_run() above
+# guards against unsupported values.
+flag_run_type = _RUN.condition
+flag_load_preprocessed_data = (_RUN.mode != 'full')
+rootDir_saveData = str(_PATHS.derivatives_root) + os.sep
 flag_save_preprocessed_data = False
-flag_run_type = 'overt' # 'overt' or 'covert'f
 
 # DEBUG: Print to confirm what flag_run_type is being used
 print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
@@ -69,8 +84,8 @@ else:
     raise ValueError(f"flag_run_type must be 'overt' or 'covert', got {flag_run_type!r}")
 
 cfg_dataset = {
-    'root_dir' : 'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data',
-    'subj_ids' : ['10'],
+    'root_dir' : str(_PATHS.raw_root),
+    'subj_ids' : resolve_subjects(_RUN, _DEFAULT_COHORT),
     'file_ids' : selected_file_ids,
     'subj_id_exclude' : [],
 }
@@ -102,7 +117,7 @@ def load_include_mask(subj_id, file_id, root_dir):
     np.ndarray of bool (length = n_trials) or None if file not found.
     """
     import pandas as pd
-    # file_id looks like 'covert_run-01' → task='covert', run='01'
+    # file_id looks like 'covert_run-01' -> task='covert', run='01'
     parts = file_id.rsplit('_run-', 1)
     task, run = parts[0], parts[1]
     fn = f"sub-{subj_id}_task-{task}_run-{run}_events.tsv"
@@ -365,10 +380,10 @@ def fit_glm_excluding_test(
         after_s  : float,
         method   : str  = "individual",     # "individual" | "block"
         noise_model: str = "ols",
-        aux      : xr.DataArray | None = None,   # ← NEW, may be None
+        aux      : xr.DataArray | None = None,   # <- NEW, may be None
 ):
     """
-    Zero‑mask rows that belong to test trials and fit the GLM.
+    Zero-mask rows that belong to test trials and fit the GLM.
 
     Returns
     -------
@@ -408,7 +423,7 @@ def fit_glm_excluding_test(
     betas = glm.fit(
         ts,               # (channel, chromo, time)
         dm_masked,        # (time,    regressor, chromo)
-        aux_masked,              # channel‑wise SSR regressor(s)
+        aux_masked,              # channel-wise SSR regressor(s)
         noise_model=noise_model,
     )
 
@@ -417,7 +432,7 @@ def fit_glm_excluding_test(
 #%%
 
 def reconstruct_hrf(
-        betas_cond: xr.DataArray,    # β’s for one condition  (component × channel)
+        betas_cond: xr.DataArray,    # beta’s for one condition  (component × channel)
         basis_fun : GaussianKernels,
         ts_full   : xr.DataArray,    # just for timing / sampling info
         chromo    : str = "HbO"
@@ -439,9 +454,9 @@ def reconstruct_hrf(
     basis = basis_fun(ts_full)                     # same sampling as the data
     if "chromo" in basis.dims:
         basis = basis.sel(chromo=chromo)
-    basis = basis.transpose("component", "time")   # component first for mat‑mul
+    basis = basis.transpose("component", "time")   # component first for mat-mul
 
-    if "chromo" in betas_cond.dims:                #  ← NEW
+    if "chromo" in betas_cond.dims:                #  <- NEW
         betas_cond = betas_cond.sel(chromo=chromo)
 
     # 2) ensure components in betas are in the same order as basis.component
@@ -473,7 +488,7 @@ else:
 def learn_channel_hrf(rec_full, test_stim, cfg):
     """
     Learn per-channel HRF shape (Left / Right) from one run,
-    zero-masking test trials, and also return the run-level SS β.
+    zero-masking test trials, and also return the run-level SS beta.
     Robust to aux==None by falling back on any 'SS' regressors in betas.
     """
     ts_full = rec_full["conc_p_tddr_filt"]  # (chromo, channel, time)
@@ -517,7 +532,7 @@ def learn_channel_hrf(rec_full, test_stim, cfg):
     if not ss_names:
         raise RuntimeError("No SS regressors found in betas or aux!")
 
-    # 5) pull out & average SS β’s (HbO only) → shape (n_channels,)
+    # 5) pull out & average SS beta’s (HbO only) -> shape (n_channels,)
     ss_beta_da = betas.sel(regressor=ss_names, chromo="HbO")
     Beta_ss_global = ss_beta_da.mean(dim="regressor").values
 
@@ -635,7 +650,7 @@ def sliding_window_classify(
     pca=None,
     feature_set='max',
 ):
-    """Sliding‐window classification with optional PCA (already fit on training).
+    """Sliding-window classification with optional PCA (already fit on training).
 
     Parameters
     ----------
@@ -964,7 +979,7 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
         # summarize per-test-trial
         test_with_overlap = set((r, i) for _, _, r, i, _ in overlaps)
         print(f"      {len(test_with_overlap)}/{len(test_epochs)} test trials "
-              f"overlap ≥1 train trial (epoch={epoch_len:.1f}s)")
+              f"overlap >=1 train trial (epoch={epoch_len:.1f}s)")
 
     return result
 
@@ -1248,7 +1263,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     print(f"  95th percentile (chance level): {summary_stats['percentile_95']:.4f}")
     print(f"  99th percentile (chance level): {summary_stats['percentile_99']:.4f}")
 
-    base = r'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\permutation\rf_baseline_only'
+    base = str(_PATHS.classifier_results_root / "permutation" / "rf_baseline_only")
     sub_folder = f'sub_{subj_id}_{flag_run_type}'
     out_dir = os.path.join(base, sub_folder)
     os.makedirs(out_dir, exist_ok=True)

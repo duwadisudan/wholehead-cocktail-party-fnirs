@@ -14,10 +14,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "classifier_results_root", "roi_csv")
+
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -203,9 +208,9 @@ def plot_single_roi_highlight(rec, roi_mapping: dict, roi_name: str, condition: 
 
 # Execution
 #%%
-master_data_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-output_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_SNR_0_20featall_ch_PC_contribution_scalp_plots"
-roi_csv_path    = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv"
+master_data_dir = str(_PATHS.raw_root)
+output_base_dir = str(_PATHS.classifier_results_root / "RF_SNR_0_20featall_ch_PC_contribution_scalp_plots")
+roi_csv_path    = str(_PATHS.roi_csv)
 
 roi_names = [
     'L-AngGyrus',

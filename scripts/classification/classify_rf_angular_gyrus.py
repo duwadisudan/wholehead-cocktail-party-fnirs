@@ -30,6 +30,18 @@ import pandas as pd
 
 import sys
 from wholehead_cocktail_party import processing_func as pf
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root", "classifier_results_root", "roi_csv")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Paper cohort for the angular-gyrus analysis. Override via config/run.yml
+# (subjects: 'all' | 'test' | list).
+_DEFAULT_COHORT = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -54,10 +66,12 @@ from scipy.ndimage import uniform_filter1d
 
 #%% Initial root directory and analysis parameters
 
-flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
+# Pipeline mode and condition come from config/run.yml. require_run() above
+# guards against unsupported values.
+flag_run_type = _RUN.condition
+flag_load_preprocessed_data = (_RUN.mode != 'full')
+rootDir_saveData = str(_PATHS.derivatives_root) + os.sep
 flag_save_preprocessed_data = False
-flag_run_type = 'overt' # 'overt' or 'covert'f
 
 # DEBUG: Print to confirm what flag_run_type is being used
 print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
@@ -71,11 +85,8 @@ else:
     raise ValueError(f"flag_run_type must be 'overt' or 'covert', got {flag_run_type!r}")
 
 cfg_dataset = {
-    'root_dir' : 'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data',
-    'subj_ids' : ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47'],
-    # 'subj_ids' : ['41'],
-
-    # 'subj_ids' : ['47'],
+    'root_dir' : str(_PATHS.raw_root),
+    'subj_ids' : resolve_subjects(_RUN, _DEFAULT_COHORT),
     'file_ids' : selected_file_ids,
     'subj_id_exclude' : [],
 }
@@ -107,7 +118,7 @@ def load_include_mask(subj_id, file_id, root_dir):
     np.ndarray of bool (length = n_trials) or None if file not found.
     """
     import pandas as pd
-    # file_id looks like 'covert_run-01' → task='covert', run='01'
+    # file_id looks like 'covert_run-01' -> task='covert', run='01'
     parts = file_id.rsplit('_run-', 1)
     task, run = parts[0], parts[1]
     fn = f"sub-{subj_id}_task-{task}_run-{run}_events.tsv"
@@ -293,7 +304,7 @@ def load_all_subjects(subj_ids, run_type, data_dir):
 
 #%% Load ROI mapping for Angular Gyrus (Left & Right)
 # Load ROI mapping using the brodmann column
-roi_df = pd.read_csv(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv")
+roi_df = pd.read_csv(_PATHS.roi_csv)
 roi_dict = {
     roi: roi_df.loc[roi_df.brodmann == roi, "channel_label"].to_list()
     for roi in roi_df.brodmann.unique()
@@ -311,7 +322,7 @@ if target_roi_R not in roi_dict:
     missing.append(target_roi_R)
 if missing:
     print(f" ROI(s) not found in roi_master.csv brodmann column: {missing}")
-    print(f"📋 Available ROIs: {sorted(list(roi_dict.keys()))}")
+    print(f" Available ROIs: {sorted(list(roi_dict.keys()))}")
     raise ValueError(f"ROI(s) {missing} not found in brodmann column of roi_master.csv")
 
 # Combine channels from both hemispheres
@@ -320,10 +331,10 @@ target_channels_R = roi_dict[target_roi_R]
 target_channels = list(dict.fromkeys(target_channels_L + target_channels_R))  # union, preserving order
 
 print(f" Target ROI: {target_roi}")
-print(f" Left Angular Gyrus channels:  {len(target_channels_L)} → {target_channels_L}")
-print(f" Right Angular Gyrus channels: {len(target_channels_R)} → {target_channels_R}")
+print(f" Left Angular Gyrus channels:  {len(target_channels_L)} -> {target_channels_L}")
+print(f" Right Angular Gyrus channels: {len(target_channels_R)} -> {target_channels_R}")
 print(f" Combined unique channels:     {len(target_channels)}")
-print(f"📋 Full channel list: {target_channels}")
+print(f" Full channel list: {target_channels}")
 
 
 #%%
@@ -394,10 +405,10 @@ def fit_glm_excluding_test(
         after_s  : float,
         method   : str  = "individual",     # "individual" | "block"
         noise_model: str = "ols",
-        aux      : xr.DataArray | None = None,   # ← NEW, may be None
+        aux      : xr.DataArray | None = None,   # <- NEW, may be None
 ):
     """
-    Zero‑mask rows that belong to test trials and fit the GLM.
+    Zero-mask rows that belong to test trials and fit the GLM.
 
     Returns
     -------
@@ -437,7 +448,7 @@ def fit_glm_excluding_test(
     betas = glm.fit(
         ts,               # (channel, chromo, time)
         dm_masked,        # (time,    regressor, chromo)
-        aux_masked,              # channel‑wise SSR regressor(s)
+        aux_masked,              # channel-wise SSR regressor(s)
         noise_model=noise_model,
     )
 
@@ -446,7 +457,7 @@ def fit_glm_excluding_test(
 #%%
 
 def reconstruct_hrf(
-        betas_cond: xr.DataArray,    # β’s for one condition  (component × channel)
+        betas_cond: xr.DataArray,    # beta’s for one condition  (component × channel)
         basis_fun : GaussianKernels,
         ts_full   : xr.DataArray,    # just for timing / sampling info
         chromo    : str = "HbO"
@@ -468,9 +479,9 @@ def reconstruct_hrf(
     basis = basis_fun(ts_full)                     # same sampling as the data
     if "chromo" in basis.dims:
         basis = basis.sel(chromo=chromo)
-    basis = basis.transpose("component", "time")   # component first for mat‑mul
+    basis = basis.transpose("component", "time")   # component first for mat-mul
 
-    if "chromo" in betas_cond.dims:                #  ← NEW
+    if "chromo" in betas_cond.dims:                #  <- NEW
         betas_cond = betas_cond.sel(chromo=chromo)
 
     # 2) ensure components in betas are in the same order as basis.component
@@ -502,7 +513,7 @@ else:
 def learn_channel_hrf(rec_full, test_stim, cfg):
     """
     Learn per-channel HRF shape (Left / Right) from one run,
-    zero-masking test trials, and also return the run-level SS β.
+    zero-masking test trials, and also return the run-level SS beta.
     Robust to aux==None by falling back on any 'SS' regressors in betas.
     """
     ts_full = rec_full["conc_p_tddr_filt"]  # (chromo, channel, time)
@@ -546,7 +557,7 @@ def learn_channel_hrf(rec_full, test_stim, cfg):
     if not ss_names:
         raise RuntimeError("No SS regressors found in betas or aux!")
 
-    # 5) pull out & average SS β’s (HbO only) → shape (n_channels,)
+    # 5) pull out & average SS beta’s (HbO only) -> shape (n_channels,)
     ss_beta_da = betas.sel(regressor=ss_names, chromo="HbO")
     Beta_ss_global = ss_beta_da.mean(dim="regressor").values
 
@@ -664,7 +675,7 @@ def sliding_window_classify(
     pca=None,
     feature_set='max',
 ):
-    """Sliding‐window classification with optional PCA (already fit on training).
+    """Sliding-window classification with optional PCA (already fit on training).
 
     Parameters
     ----------
@@ -993,7 +1004,7 @@ def check_epoch_overlap(stim1, stim2, tr1, te1, tr2, te2, t_pre, t_post,
         # summarize per-test-trial
         test_with_overlap = set((r, i) for _, _, r, i, _ in overlaps)
         print(f"      {len(test_with_overlap)}/{len(test_epochs)} test trials "
-              f"overlap ≥1 train trial (epoch={epoch_len:.1f}s)")
+              f"overlap >=1 train trial (epoch={epoch_len:.1f}s)")
 
     return result
 
@@ -1051,11 +1062,11 @@ def filter_to_roi_channels(run_data, target_channels, min_channels=5):
     
     if skip_subject:
         print(f"   Only {len(available_channels)}/{len(target_channels)} ROI channels available (< {min_channels} required)")
-        print(f"  📋 Available: {available_channels}")
+        print(f"   Available: {available_channels}")
         return None, available_channels, skip_subject
     
     print(f"   Found {len(available_channels)}/{len(target_channels)} ROI channels")
-    print(f"  📋 Using channels: {available_channels}")
+    print(f"   Using channels: {available_channels}")
     
     # Return the run_data as-is but with available_channels list
     # The actual channel selection happens in the main loop after finding common channels
@@ -1067,7 +1078,7 @@ from collections import Counter
 
 # New configuration for subject-specific Angular Gyrus channel usage
 USE_SUBJECT_SPECIFIC_AG_CHANNELS = True  # if True, load per-subject channel list (union across folds) and use all of them
-ANGULAR_CHANNEL_RESULTS_DIR = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\angular_gyrus_channels_snr_0_20feat_balanced_depth5_oob"
+ANGULAR_CHANNEL_RESULTS_DIR = str(_PATHS.classifier_results_root / "angular_gyrus_channels_snr_0_20feat_balanced_depth5_oob")
 MIN_CHANNELS_THRESHOLD = 3  # minimal channels required after intersecting runs
 AG_MIN_FOLD_PRESENCE = 0.0  # percentage (0-100) minimum fold presence to keep a channel (applied if subject-specific list available)
 
@@ -1088,7 +1099,7 @@ def load_subject_ag_channels(subj_id: str, condition: str):
         if 'fold_presence_pct' in df.columns:
             df = df[df['fold_presence_pct'] >= AG_MIN_FOLD_PRESENCE]
         ch_list = sorted(df['channel_name'].astype(str).unique().tolist())
-        print(f"  🔄 Loaded {len(ch_list)} AG channels from prior extraction (min presence {AG_MIN_FOLD_PRESENCE}%)")
+        print(f"   Loaded {len(ch_list)} AG channels from prior extraction (min presence {AG_MIN_FOLD_PRESENCE}%)")
         return ch_list
     except Exception as e:
         print(f"   Failed to read {csv_path}: {e}")
@@ -1107,7 +1118,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
     acc_outer     = None
     outer_fold_idx = 0
 
-# Build run‐level labels & recordings
+# Build run-level labels & recordings
     run1_full  = rec[subj_idx][0]
     run2_full  = rec[subj_idx][1]
 
@@ -1299,7 +1310,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
 
 
                     # 3) compute per-trial, per-channel baseline mean
-            #    shapes: ts_tr (n_tr, n_chan, seg_len) → baseline_tr (n_tr, n_chan, 1)
+            #    shapes: ts_tr (n_tr, n_chan, seg_len) -> baseline_tr (n_tr, n_chan, 1)
             baseline_tr = ts_train[:,:,bs_mask].mean(axis=2, keepdims=True)
             baseline_te = ts_test[:,:,bs_mask].mean(axis=2, keepdims=True)
 
@@ -1581,7 +1592,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
         print(f"   No temporal overlap detected between any train and test epochs")
     else:
         frac_with = sum(1 for c in overlap_counts if c > 0)
-        print(f"   {frac_with}/{len(overlap_counts)} folds have ≥1 overlapping pair")
+        print(f"   {frac_with}/{len(overlap_counts)} folds have >=1 overlapping pair")
         # Fraction of test trials affected on average
         mean_n_test = np.mean([f["n_test"] for f in overlap_results_all_folds])
         print(f"  Mean test trials per fold: {mean_n_test:.1f}")
@@ -1600,8 +1611,8 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
 
     import json
 
-    # build output directory per subject & run‐type
-    base = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_LR_ang_gyr_snr_0_20feat_balanced_depth5_oob"
+    # build output directory per subject & run-type
+    base = str(_PATHS.classifier_results_root / "nested" / "rf_LR_ang_gyr_snr_0_20feat_balanced_depth5_oob")
     sub_folder = f"sub_{subj_id}_{flag_run_type}"
     out_dir = os.path.join(base, sub_folder)
     os.makedirs(out_dir, exist_ok=True)
@@ -1667,7 +1678,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
             fig_diag.tight_layout()
             fig_diag.savefig(os.path.join(out_dir, f"per_fold_train_test_{name}.png"), dpi=300)
             plt.close(fig_diag)
-        print(f"  → Saved per-fold train/test diagnostic plot(s)")
+        print(f"  -> Saved per-fold train/test diagnostic plot(s)")
 
 
     # 3) save summary accuracies (regular + balanced) and confusion matrix
@@ -1817,7 +1828,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
             "common_channels_used_count": len(roi_channel_info['common_channels_used']),
             "common_channels_used": roi_channel_info['common_channels_used'],
             "min_channels_threshold": MIN_CHANNELS_THRESHOLD,
-            "roi_csv_source": r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv"
+            "roi_csv_source": str(_PATHS.roi_csv)
         }, fp, indent=2)
 
     # Save PCA component distribution
@@ -1841,7 +1852,7 @@ for subj_idx, subj_id in enumerate(cfg_dataset['subj_ids']):
             "last_fold_cumulative_variance": float(cum_var_list[-1]) if cum_var_list else None
         }, fp, indent=2)
 
-    print(f"→ Saved results for sub {subj_id} to {out_dir}")
+    print(f"-> Saved results for sub {subj_id} to {out_dir}")
 
     if 'first_fold_pca_components' in locals():
         fig_pc, axes = plt.subplots(2,1, figsize=(10,6), constrained_layout=True)

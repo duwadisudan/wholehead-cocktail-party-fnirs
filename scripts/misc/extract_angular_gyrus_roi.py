@@ -13,15 +13,19 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 import pandas as pd
 from pathlib import Path
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "roi_csv")
+
 # CHANGE THIS FOR EACH SUBJECT
 SUBJECT_ID = "sub-663"
 
 # Define base paths
-base_dir = Path(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party")
-subject_dir = base_dir / "Cocktail_party_whole_head_master_data" / SUBJECT_ID / "nirs" / "atlasviewer_mni"
+subject_dir = _PATHS.raw_root / SUBJECT_ID / "nirs" / "atlasviewer_mni"
 
 # Define input and output paths
-input_csv = base_dir / "ROIs" / "roi_master.csv"
+input_csv = _PATHS.roi_csv
 scanner_csv = subject_dir / "scanner_mni.csv"
 output_dir = subject_dir
 output_file = output_dir / f"anggyr_{SUBJECT_ID}.csv"

@@ -15,11 +15,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "classifier_results_root", "roi_csv")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -364,11 +368,11 @@ def save_group_outputs(group_df: pd.DataFrame, subject_roi_tables, output_dir: s
 
 def main():
     # Config
-    base_dir = r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Classifier_script_results\\nested\\rf_snr_0_20feat_balanced_depth5_oob"
+    base_dir = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
     subjects = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
     conditions = ['overt', 'covert']
-    output_base_dir = r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Classifier_script_results\\RF_above_chance_group_roi_contributions"
-    roi_csv_path = r"U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\ROIs\\roi_master.csv"
+    output_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_group_roi_contributions")
+    roi_csv_path = str(_PATHS.roi_csv)
 
     # Above-chance filtering
     flag_above_chance_only = True   # set False to include all subjects
@@ -404,9 +408,9 @@ def main():
 
         group_df = aggregate_group_roi_contrib(subject_tables)
         out_dir = os.path.join(output_base_dir, f"group_{condition}_roi_contrib")
-        print(f" Creating plots → {out_dir}")
+        print(f" Creating plots -> {out_dir}")
         create_group_roi_plots(group_df, out_dir, top_n=10)
-        print(f" Saving CSV/JSON summaries → {out_dir}")
+        print(f" Saving CSV/JSON summaries -> {out_dir}")
         save_group_outputs(group_df, subject_tables, out_dir)
 
         if group_df is not None and not group_df.empty:

@@ -12,11 +12,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 """
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "classifier_results_root")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -37,7 +41,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # File path (All Channels — has both Overt_perc and Covert_perc)
-file_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob\final_table.csv"
+file_path = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob" / "final_table.csv")
 
 def load_and_clean_data(fp):
     """Load and clean the CSV data."""
@@ -267,7 +271,7 @@ def main():
     fig = create_visualization(overt, covert, pairwise_result)
 
     # Create output directory if it doesn't exist
-    output_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\stats_overt_vs_covert_snr_0_20feat"
+    output_dir = str(_PATHS.classifier_results_root / "nested" / "stats_overt_vs_covert_snr_0_20feat")
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # Save the plot in three formats (PDF, SVG, PNG)

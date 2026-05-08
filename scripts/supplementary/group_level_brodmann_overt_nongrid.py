@@ -26,6 +26,17 @@ from statsmodels.stats.multitest import multipletests
 
 import sys
 from wholehead_cocktail_party import processing_func as pf
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root", "group_avg_results_root", "roi_csv")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Cohort of subjects with both overt and covert runs. Override via run.yml.
+_DEFAULT_COHORT = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -38,12 +49,13 @@ importlib.reload(pf)
 
 # %% Initial root directory and analysis parameters
 
-flag_load_preprocessed_data = True  # if 1, will skip load_and_preprocess function and use saved data
+# Pipeline mode and condition come from config/run.yml.
+flag_run_type = _RUN.condition
+flag_load_preprocessed_data = (_RUN.mode != 'full')
 flag_load_preprocessed_control_data = False
-flag_save_control_preprocessed_data = False # if 1, will skip load_and_preprocess function and use saved data
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\"
+flag_save_control_preprocessed_data = False
+rootDir_saveData = str(_PATHS.derivatives_root) + os.sep
 flag_save_preprocessed_data = False
-flag_run_type = 'overt' # 'overt' or 'covert'
 
 # Trial-quality filtering via augmented events
 # Augmented events TSVs live in each subject's nirs/ folder.
@@ -62,9 +74,8 @@ else:
     raise ValueError(f"flag_run_type must be 'overt' or 'covert', got {flag_run_type!r}")
 
 cfg_dataset = {
-    'root_dir' : 'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data',
-    'subj_ids' : ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47'],
-
+    'root_dir' : str(_PATHS.raw_root),
+    'subj_ids' : resolve_subjects(_RUN, _DEFAULT_COHORT),
     'file_ids' : selected_file_ids,
     'subj_id_exclude' : [],
 }
@@ -351,7 +362,7 @@ ba_overt = _blockavg_all_runs(rec_overt, stim_labels['overt'])
 # ba_covert = _blockavg_all_runs(rec_covert, stim_labels['covert'])
 
 # %%
-roi_df = pd.read_csv(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv")
+roi_df = pd.read_csv(_PATHS.roi_csv)
 roi_dict = {
     roi: roi_df.loc[roi_df.brodmann == roi, "channel_label"].to_list()
     for roi in roi_df.brodmann.unique()
@@ -375,7 +386,7 @@ def roi_mean_per_subject(subj_avg_list):
         roi_slices = []
         for roi, chs in roi_dict.items():
             avail = [c for c in chs if c in da.channel.values]
-            if not avail:                      # no surviving channels → skip
+            if not avail:                      # no surviving channels -> skip
                 continue
             roi_slice = da.sel(channel=avail).mean("channel")
             roi_slice = roi_slice.expand_dims(ROI=[roi])
@@ -654,11 +665,7 @@ def plot_roi_group_robust_pub(roi, robust_results, save_dir=None):
 
 print("\nCreating publication figures for overt condition...")
 
-save_dir = Path(
-    "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\"
-    "Research_projects\\Whole_Head_Cocktail_party\\Group_avg_results\\"
-    "figures_BA_snr_0_overt_only_pub_filtered_trials"
-)
+save_dir = _PATHS.group_avg_results_root / "figures_BA_snr_0_overt_only_pub_filtered_trials"
 save_dir.mkdir(parents=True, exist_ok=True)
 print(f"Saving figures to: {save_dir}")
 

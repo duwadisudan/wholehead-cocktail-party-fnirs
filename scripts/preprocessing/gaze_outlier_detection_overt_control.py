@@ -21,6 +21,11 @@ import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
 from scipy.interpolate import interp1d
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root")
+
 # CONFIGURATION
 
 SUBJECTS = [
@@ -36,7 +41,7 @@ RUNS = [
     ("overtcontrol",   "03", "overtcontrol_run-03")
 ]
 
-SNIRF_BASE = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
+SNIRF_BASE = str(_PATHS.raw_root)
 OUT_DIR    = os.path.join(SNIRF_BASE, "derivatives", "gaze_pruning_neon")
 MASTER_DIR = os.path.join(SNIRF_BASE, "derivatives", "gaze_pruning_master")
 
@@ -93,14 +98,14 @@ def pixel_to_gaze_angles(x_px, y_px=None,
 
     Uses the **pinhole camera model** with FOV-derived focal lengths:
         f_x = (width / 2) / tan(fov_x / 2)
-        θ_x = arctan((x_px − cx) / f_x)
+        theta_x = arctan((x_px - cx) / f_x)
 
     Parameters
     ----------
     x_px : float or array-like
         Horizontal gaze pixel coordinate(s).  Origin at top-left.
     y_px : float, array-like or None
-        Vertical gaze pixel coordinate(s).  If None only θ_x is computed.
+        Vertical gaze pixel coordinate(s).  If None only theta_x is computed.
     width, height : int
         Scene camera resolution in pixels (default 1600×1200 for Neon).
     fov_x_deg, fov_y_deg : float
@@ -108,16 +113,16 @@ def pixel_to_gaze_angles(x_px, y_px=None,
 
     Returns
     -------
-    theta_x_deg : ndarray  — horizontal angle (+ = right, − = left)
-    theta_y_deg : ndarray or None  — vertical angle (+ = down, − = up)
+    theta_x_deg : ndarray  — horizontal angle (+ = right, - = left)
+    theta_y_deg : ndarray or None  — vertical angle (+ = down, - = up)
     gaze_vector : tuple(ndarray, ndarray, ndarray) or None
         Unit gaze direction (gx, gy, gz) in camera coords, only when y_px given.
 
     Sign convention (image origin top-left):
-        positive θ_x → gaze right
-        negative θ_x → gaze left
-        positive θ_y → gaze down
-        negative θ_y → gaze up
+        positive theta_x -> gaze right
+        negative theta_x -> gaze left
+        positive theta_y -> gaze down
+        negative theta_y -> gaze up
     """
     x_px = np.asarray(x_px, dtype=np.float64)
 
@@ -164,7 +169,7 @@ def preprocess_gaze(timestamps, raw_gaze, fs=SAMPLING_RATE, cutoff=LP_CUTOFF,
     """Resample, replace zeros with NaN, interpolate, lowpass filter."""
     t_u, gaze_u = resample_uniform(timestamps, raw_gaze, fs)
 
-    # Zeros → NaN (missing data marker from Neon)
+    # Zeros -> NaN (missing data marker from Neon)
     gaze_u[gaze_u == 0] = np.nan
 
     # Linear interpolation to fill NaN
@@ -238,7 +243,7 @@ def detect_outlier(epoch, side, params, fs=SAMPLING_RATE, pre_s=PRE_CUE):
     expected = params["expected_left"] if side == "left" else params["expected_right"]
 
     # Convert analysis window from seconds-post-onset to sample indices in epoch
-    # epoch sample 0 = onset − pre_s
+    # epoch sample 0 = onset - pre_s
     a_start = int((pre_s + params["analysis_start_s"]) * fs)
     a_end   = int((pre_s + params["analysis_end_s"]) * fs)
     a_start = max(a_start, 0)
@@ -246,7 +251,7 @@ def detect_outlier(epoch, side, params, fs=SAMPLING_RATE, pre_s=PRE_CUE):
 
     analysis = epoch[a_start:a_end]
     if len(analysis) == 0 or np.all(np.isnan(analysis)):
-        return True  # no data → outlier
+        return True  # no data -> outlier
 
     win_samples = int(WINDOW_SEC * fs)
     n_windows = max(1, len(analysis) // win_samples)
@@ -322,7 +327,7 @@ def process_run(subj, task, run):
     # Preprocess
     t_u, gaze_filt = preprocess_gaze(timestamps, gaze_x_raw)
 
-    # Convert pixels → degrees (FOV-based pinhole model)
+    # Convert pixels -> degrees (FOV-based pinhole model)
     gaze_deg_raw, _, _ = pixel_to_gaze_angles(gaze_filt)
 
     # Baseline-correct in degree space
@@ -430,7 +435,7 @@ if __name__ == "__main__":
     os.makedirs(MASTER_DIR, exist_ok=True)
 
     # Collect results keyed by (subject, task) for per-subject CSV output
-    per_subj_task = {}   # (subj, task) → [row_dict, ...]
+    per_subj_task = {}   # (subj, task) -> [row_dict, ...]
     all_results = []
 
     for subj in SUBJECTS:

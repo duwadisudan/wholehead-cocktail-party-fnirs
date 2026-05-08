@@ -6,10 +6,10 @@ Within-subject variability vs overt accuracy (supplementary).
 Compares two per-channel trial-level reliability metrics against decoding
 accuracy across subjects:
 
-    CNR = |μ| / σ            (response reliability; higher = more reliable)
-    CV  = σ  / |μ|           (within-subject variability; higher = more variable)
+    CNR = |mu| / sigma            (response reliability; higher = more reliable)
+    CV  = sigma  / |mu|           (within-subject variability; higher = more variable)
 
-where μ and σ are the mean and SD of the HbO response averaged over the
+where mu and sigma are the mean and SD of the HbO response averaged over the
 3-8 s post-stimulus window across trials. Two CV summaries are computed
 per subject: a per-channel mean and a Jensen-safe subject-level form
 (differs because of Jensen's inequality). Pearson correlations against
@@ -25,6 +25,17 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 
 import sys
 from whichscript import enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "derivatives_root", "classifier_results_root", "roi_csv")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Cohort of subjects with both overt and covert runs. Override via run.yml.
+_DEFAULT_COHORT = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
 
 enable_auto_logging()
 #%%
@@ -47,24 +58,17 @@ except ImportError:
 warnings.filterwarnings("ignore")
 
 # ------------------------------------------------------------------ CONFIG
-SUBJECTS = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
-RUN_TYPE = 'overt'
+SUBJECTS = resolve_subjects(_RUN, _DEFAULT_COHORT)
+RUN_TYPE = _RUN.condition  # from config/run.yml
 
-PROJECT_ROOT = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party"
+SNR_DIR = str(_PATHS.derivatives_root / f"trial_snr_{RUN_TYPE}")
 
-SNR_DIR = os.path.join(PROJECT_ROOT,
-                       "Cocktail_party_whole_head_master_data",
-                       "derivatives", "processed_data",
-                       f"trial_snr_{RUN_TYPE}")
-
-CLASSIFIER_DIR = os.path.join(PROJECT_ROOT,
-                              "Classifier_script_results", "nested",
-                              "rf_snr_0_20feat_balanced_depth5_oob")
+CLASSIFIER_DIR = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
 
 ACC_CSV = os.path.join(CLASSIFIER_DIR, "final_table.csv")
 ACC_COL = "Overt_perc"
 
-ROI_MAP_CSV = os.path.join(PROJECT_ROOT, "ROIs", "roi_master.csv")
+ROI_MAP_CSV = str(_PATHS.roi_csv)
 
 OUT_DIR = CLASSIFIER_DIR
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -108,13 +112,13 @@ print(f"Accuracy range: {acc_series_full.min():.1f}% to {acc_series_full.max():.
 # ------------------------------------------------------------------ LOAD PER-CHANNEL DATA AND COMPUTE METRICS
 # For each subject, build:
 #   AG and All-Channels:
-#     CNR_mean   = mean( |μ_ch| / σ_ch )                [existing snr_avg, kept for comparison]
-#     CV_mean    = mean( σ_ch / |μ_ch| )                [per-channel CV, then averaged]
-#     CV_subject = mean(σ_ch) / mean(|μ_ch|)            [Jensen-safe subject-level CV]
+#     CNR_mean   = mean( |mu_ch| / sigma_ch )                [existing snr_avg, kept for comparison]
+#     CV_mean    = mean( sigma_ch / |mu_ch| )                [per-channel CV, then averaged]
+#     CV_subject = mean(sigma_ch) / mean(|mu_ch|)            [Jensen-safe subject-level CV]
 
 ag_cnr_mean   = {}
-ag_cv_mean    = {}   # mean over channels of (σ/|μ|)
-ag_cv_subject = {}   # mean(σ) / mean(|μ|)
+ag_cv_mean    = {}   # mean over channels of (sigma/|mu|)
+ag_cv_subject = {}   # mean(sigma) / mean(|mu|)
 ag_abs_mean   = {}
 ag_std_mean   = {}
 n_ag_channels = {}
@@ -130,7 +134,7 @@ EPS = 1e-12  # floor to avoid divide-by-zero in per-channel CV
 
 
 def _per_channel_cv(abs_mu, sigma):
-    """σ/|μ| with a tiny floor on |μ| to avoid divide-by-zero. Inf/NaN are dropped by caller."""
+    """sigma/|mu| with a tiny floor on |mu| to avoid divide-by-zero. Inf/NaN are dropped by caller."""
     denom = np.where(np.abs(abs_mu) < EPS, np.nan, abs_mu)
     return sigma / denom
 
@@ -265,7 +269,7 @@ for col, label in metrics:
     rho,  p_s, _   = _spearman(analysis_df_full, col)
     results[col] = (r, p_p, rho, p_s, len(sub))
     print(f"{label:50s}  Pearson r = {r:+.3f} (p = {p_p:.4f})   "
-          f"Spearman ρ = {rho:+.3f} (p = {p_s:.4f})   N = {len(sub)}")
+          f"Spearman rho = {rho:+.3f} (p = {p_s:.4f})   N = {len(sub)}")
 
 #%%
 # ------------------------------------------------------------------ SAVE COMPARISON TABLE
@@ -290,11 +294,11 @@ print(f"Saved subject-level metrics CSV: {csv_path}")
 #%%
 # ------------------------------------------------------------------ PUBLICATION FIGURE (2x2 side-by-side)
 # Rows: All Channels (top), Angular Gyrus (bottom)
-# Cols: CNR (left, |μ|/σ), CV (right, σ/|μ|)
+# Cols: CNR (left, |mu|/sigma), CV (right, sigma/|mu|)
 # CV column uses the per-channel-then-averaged CV (ag_cv_mean / all_cv_mean) by default —
 # switch to *_cv_subject below if you prefer the Jensen-safe variant.
 
-USE_SUBJECT_LEVEL_CV = False  # set True to plot mean(σ)/mean(|μ|) instead of mean(σ/|μ|)
+USE_SUBJECT_LEVEL_CV = False  # set True to plot mean(sigma)/mean(|mu|) instead of mean(sigma/|mu|)
 
 cv_ag_col  = 'ag_cv_subject'  if USE_SUBJECT_LEVEL_CV else 'ag_cv_mean'
 cv_all_col = 'all_cv_subject' if USE_SUBJECT_LEVEL_CV else 'all_cv_mean'
@@ -374,7 +378,7 @@ _df = analysis_df_full.dropna(subset=['all_cnr_mean', 'accuracy'])
 r, p, _ = _corr(analysis_df_full, 'all_cnr_mean')
 _draw_panel(axes[0, 0], _df['all_cnr_mean'].values, _df['accuracy'].values,
             _df.index.values, 'A',
-            'All-Channels CNR (|μ|/σ)', r, p)
+            'All-Channels CNR (|mu|/sigma)', r, p)
 
 # Panel B: All-Ch CV
 _df = analysis_df_full.dropna(subset=[cv_all_col, 'accuracy'])
@@ -388,7 +392,7 @@ _df = analysis_df_full.dropna(subset=['ag_cnr_mean', 'accuracy'])
 r, p, _ = _corr(analysis_df_full, 'ag_cnr_mean')
 _draw_panel(axes[1, 0], _df['ag_cnr_mean'].values, _df['accuracy'].values,
             _df.index.values, 'C',
-            'Angular Gyrus CNR (|μ|/σ)', r, p)
+            'Angular Gyrus CNR (|mu|/sigma)', r, p)
 
 # Panel D: AG CV
 _df = analysis_df_full.dropna(subset=[cv_ag_col, 'accuracy'])
@@ -414,7 +418,7 @@ plt.show()
 
 #%%
 # ------------------------------------------------------------------ RIGHT-HAND-SIDE ONLY FIGURE (CV panels)
-# Within-subject variability (σ/|μ|) for All-Channels (top) and Angular Gyrus (bottom),
+# Within-subject variability (sigma/|mu|) for All-Channels (top) and Angular Gyrus (bottom),
 # vertical 2x1 publication layout matching snr_vs_accuracy_analysis.py.
 
 fig_cv, (ax_all_cv, ax_ag_cv) = plt.subplots(2, 1, figsize=(7, 11))

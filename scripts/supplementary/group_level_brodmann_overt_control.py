@@ -28,6 +28,22 @@ from datetime import datetime
 
 import sys
 from wholehead_cocktail_party import processing_func as pf
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root", "group_avg_results_root", "roi_csv")
+
+# This script is single-purpose for the overt-control task; condition is fixed
+# below and the run.yml condition field is intentionally ignored. Mode still
+# applies (full vs from-derivatives).
+_RUN = load_run_config()
+require_run(_RUN, supported_modes={"full", "from-derivatives"})
+
+# Cohort of subjects with overt-control runs. Override via run.yml.
+# Note: 'subjects: test' resolves to sub-10, which does not have overtcontrol
+# data — use an explicit list (e.g. ['37']) to smoke-test this script.
+_DEFAULT_COHORT = ['37','38','42','45','48','49','50','51']
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -40,10 +56,10 @@ importlib.reload(pf)
 
 # %% Initial root directory and analysis parameters
 
-flag_load_preprocessed_data = False   # load saved rec/chs if available
-rootDir_saveData = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\overtcontrol_brodmann_snr0\\"
+flag_load_preprocessed_data = (_RUN.mode != 'full')   # mode from config/run.yml
+rootDir_saveData = str(_PATHS.derivatives_root / "overtcontrol_brodmann_snr0") + os.sep
 flag_save_preprocessed_data = True  # save rec/chs if we preprocess now
-flag_run_type = 'overtcontrol'  # 'overtcontrol' only for this script
+flag_run_type = 'overtcontrol'  # this script is overt-control only by design
 
 # DEBUG: Print to confirm what flag_run_type is being used
 print(f" DEBUG: flag_run_type is set to: '{flag_run_type}'")
@@ -55,8 +71,8 @@ else:
     raise ValueError(f"flag_run_type must be 'overtcontrol', got {flag_run_type!r}")
 
 cfg_dataset = {
-    'root_dir' : 'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data',
-    'subj_ids' : ['37','38','42','45','48','49','50','51'],
+    'root_dir' : str(_PATHS.raw_root),
+    'subj_ids' : resolve_subjects(_RUN, _DEFAULT_COHORT),
     'file_ids' : selected_file_ids,
     'subj_id_exclude' : [],
 }
@@ -167,7 +183,7 @@ def _blockavg_all_runs(rec, stim_list,
                        ts_name='conc_p_tddr_filt_postglm',
                        t_pre=cfg_blockavg['trange_hrf'][0],
                        t_post=cfg_blockavg['trange_hrf'][1]):
-    """Return nested list [subj][run] of block‑average DataArrays."""
+    """Return nested list [subj][run] of block-average DataArrays."""
     out = [[None]*len(rec[0]) for _ in range(len(rec))]
     for s_idx in range(len(rec)):
         for r_idx in range(len(rec[s_idx])):
@@ -222,12 +238,12 @@ outdir.mkdir(parents=True, exist_ok=True)
 fname    = 'all_sub_conc_tddr_overtcontrol.pkl.gz'
 with gzip.open(outdir / fname, 'wb') as f:
     pickle.dump(ba_overtcontrol, f, protocol=pickle.HIGHEST_PROTOCOL)
-print(f'  Saved overtcontrol block averages → {outdir/fname}')
+print(f'  Saved overtcontrol block averages -> {outdir/fname}')
 
 
 
 # %%
-roi_df = pd.read_csv(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv")
+roi_df = pd.read_csv(_PATHS.roi_csv)
 roi_dict = {
     roi: roi_df.loc[roi_df.brodmann == roi, "channel_label"].to_list()
     for roi in roi_df.brodmann.unique()
@@ -250,7 +266,7 @@ def roi_mean_per_subject(subj_avg_list):
         roi_slices = []
         for roi, chs in roi_dict.items():
             avail = [c for c in chs if c in da.channel.values]
-            if not avail:                      # no surviving channels → skip
+            if not avail:                      # no surviving channels -> skip
                 continue
             roi_slice = da.sel(channel=avail).mean("channel")
             roi_slice = roi_slice.expand_dims(ROI=[roi])
@@ -269,7 +285,7 @@ def group_mean_sem_robust(subj_roi_list):
 def bonferroni_pvals_robust(subj_roi_list, win_sec=2.0, alpha=0.05, min_subjects=2):
     """
     Robust Bonferroni correction with validation.
-    Only corrects for 7 windows (α/7), not across ROIs.
+    Only corrects for 7 windows (alpha/7), not across ROIs.
     """
     # 1. Filter out ROIs with insufficient subjects
     stacked = xr.concat(subj_roi_list, dim="subj")
@@ -310,7 +326,7 @@ def bonferroni_pvals_robust(subj_roi_list, win_sec=2.0, alpha=0.05, min_subjects
     
     # Corrected alpha for number of windows only
     alpha_corrected = alpha / n_win
-    print(f"Simple Bonferroni: α = {alpha} / {n_win} windows = {alpha_corrected:.6f}")
+    print(f"Simple Bonferroni: alpha = {alpha} / {n_win} windows = {alpha_corrected:.6f}")
 
     # 3. Compute p-values
     pvals = xr.full_like(
@@ -345,7 +361,7 @@ def bonferroni_pvals_robust(subj_roi_list, win_sec=2.0, alpha=0.05, min_subjects
     return pvals, alpha_corrected, n_valid
 
 def get_significance_mask(pvals, alpha_corrected, n_valid, min_subjects=2):
-    """Create significance mask: p < α_corrected AND n_valid >= min_subjects."""
+    """Create significance mask: p < alpha_corrected AND n_valid >= min_subjects."""
     sig_mask = (pvals < alpha_corrected) & (n_valid >= min_subjects)
     return sig_mask
 
@@ -360,7 +376,7 @@ subj_roi_overtcontrol = roi_mean_per_subject(subj_avg_overtcontrol)
 #%%
 # APPLY ROBUST STATISTICS TO ALL CONDITIONS
 
-print("\n🔄 Applying robust statistics to overtcontrol...")
+print("\n Applying robust statistics to overtcontrol...")
 
 robust_results = {}
 
@@ -522,7 +538,7 @@ def _save_timeseries_bundle(
         # Fallback to scipy engine if netCDF4 isn't available
         print(f"NetCDF write default engine failed ({e}); retrying with engine='scipy'.")
         ds.to_netcdf(outpath, engine="scipy")
-    print(f" Saved ROI time series bundle → {outpath}")
+    print(f" Saved ROI time series bundle -> {outpath}")
     return outpath
 
 def plot_roi_group_robust(roi, robust_results, save_path=None):
@@ -652,7 +668,7 @@ def plot_roi_group_robust(roi, robust_results, save_path=None):
         ax.tick_params(labelsize=axis_font_size-2)
     
     # Set common y-label
-    axes[0].set_ylabel("Concentration Change\n(μM)", fontsize=axis_font_size)
+    axes[0].set_ylabel("Concentration Change\n(muM)", fontsize=axis_font_size)
     
     # Add legend outside the plot area (to the right)
     handles, labels = axes[0].get_legend_handles_labels()
@@ -674,7 +690,7 @@ def plot_roi_group_robust(roi, robust_results, save_path=None):
 print("\n Creating plots with significance highlighting (overtcontrol)...")
 
 # Set up save directory
-save_dir = Path("U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Group_avg_results\\figures_brodmann_overtcontrol")
+save_dir = _PATHS.group_avg_results_root / "figures_brodmann_overtcontrol"
 save_dir.mkdir(parents=True, exist_ok=True)
 print(f" Saving figures to: {save_dir}")
 

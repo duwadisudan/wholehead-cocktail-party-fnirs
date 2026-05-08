@@ -20,6 +20,11 @@ from pathlib import Path
 from typing import List, Optional
 import pyvista as pv
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "roi_csv")
+
 # CONFIGURATION - MODIFY THESE
 
 # List of subject IDs to include in analysis
@@ -37,16 +42,11 @@ SUBJECT_IDS = [
 ]
 
 # Base directory for data
-BASE_DIR = Path(
-    r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects"
-    r"\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-)
+BASE_DIR = _PATHS.raw_root
 
-# Template MNI file (ground truth - where channels SHOULD be)
-TEMPLATE_MNI_PATH = Path(
-    r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects"
-    r"\Whole_Head_Cocktail_party\ROIs\roi_coor_system_2_w_mni.csv"
-)
+# Template MNI file (ground truth - where channels SHOULD be).
+# Lives next to roi_master.csv in the ROIs/ folder.
+TEMPLATE_MNI_PATH = _PATHS.roi_csv.parent / "roi_coor_system_2_w_mni.csv"
 
 # Output directory
 OUTPUT_DIR = BASE_DIR / "derivatives" / "mni_registration_error_analysis"

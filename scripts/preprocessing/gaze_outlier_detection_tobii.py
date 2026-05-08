@@ -3,7 +3,7 @@ Gaze outlier detection — Tobii eye tracker (publication-quality figures).
 
 Reads physio TSV + events TSV directly (no SNIRF/Homer3 dependency) for
 subjects acquired with the Tobii system. Tobii gaze is normalised [0,1],
-so the pixel→degree step uses (gaze − baseline) × FOV instead of the
+so the pixel->degree step uses (gaze - baseline) × FOV instead of the
 arctan model used for Neon. Outputs per-run CSV of outlier trial indices
 and PNG/PDF/SVG diagnostic figures matching the manuscript figure style.
 
@@ -21,6 +21,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from scipy.signal import butter, filtfilt
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root")
+
 # CONFIGURATION
 
 SUBJECTS = ["01"]
@@ -29,11 +34,7 @@ TASKS = ["overt"]
 
 RUNS = [1,2]  # run numbers to process
 
-SNIRF_BASE = (
-    r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab"
-    r"\Research_projects\Whole_Head_Cocktail_party"
-    r"\Cocktail_party_whole_head_master_data"
-)
+SNIRF_BASE = str(_PATHS.raw_root)
 OUT_BASE = os.path.join(SNIRF_BASE, "derivatives", "matlab_gaze_subjects")
 
 # Signal processing
@@ -104,7 +105,7 @@ def preprocess_gaze(timestamps, raw_gaze, fs=SAMPLING_RATE, cutoff=LP_CUTOFF,
     t_uniform = np.arange(timestamps[0], timestamps[-1], 1.0 / fs)
     gaze_u = np.interp(t_uniform, timestamps, raw_gaze)
 
-    # NaN / zero → interpolate
+    # NaN / zero -> interpolate
     bad = np.isnan(gaze_u) | (gaze_u == 0)
     if bad.all():
         return t_uniform, gaze_u
@@ -213,7 +214,7 @@ def process_run(subj, task, run_num):
     timestamps = df_physio["timestamps"].values
     gaze_x_raw = df_physio["gaze2dX"].values
 
-    # Parse side from trial_type ("Overt Left" → "left")
+    # Parse side from trial_type ("Overt Left" -> "left")
     df_events["side"] = df_events["trial_type"].str.lower().apply(
         lambda x: "left" if "left" in x else ("right" if "right" in x else "unknown")
     )

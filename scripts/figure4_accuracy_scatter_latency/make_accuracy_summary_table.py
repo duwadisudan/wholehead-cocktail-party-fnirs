@@ -15,8 +15,13 @@ import json
 import pandas as pd
 import numpy as np
 
-# base directory where per‐subject folders live
-BASE = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob"
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "classifier_results_root")
+
+# base directory where per-subject folders live
+BASE = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
 
 # Threshold for above-chance performance
 CHANCE_THRESHOLD = 62.3
@@ -27,8 +32,8 @@ def create_time_axis(n_points, sampling_rate=8.98, start_time=-2.0):
     Based on plot_accuracy_over_time.py logic.
     """
     fs = sampling_rate
-    window_size_samples = int(round(1.0 * fs))  # ≈ 9 samples
-    step_size_samples = int(round(0.5 * fs))    # ≈ 4 samples
+    window_size_samples = int(round(1.0 * fs))  # ~= 9 samples
+    step_size_samples = int(round(0.5 * fs))    # ~= 4 samples
     
     total_duration = 17.0  # seconds
     total_samples = int(total_duration * fs)
@@ -167,7 +172,7 @@ print(f"Wrote summary to {out_csv}")
 print(f"\nTable includes:")
 print(f"  - Peak accuracy percentage (Overt_perc, Covert_perc)")
 print(f"  - Peak accuracy latency in seconds (Overt_peak_latency, Covert_peak_latency)")
-print(f"    → Set to 'N/A' if peak accuracy < {CHANCE_THRESHOLD}% (below chance)")
+print(f"    -> Set to 'N/A' if peak accuracy < {CHANCE_THRESHOLD}% (below chance)")
 print(f"  - All latencies restricted to 0-5s window (cue onset to stimulus offset)")
 print(f"  - 'N/A' indicates peak below threshold or data unavailable")
 # %%

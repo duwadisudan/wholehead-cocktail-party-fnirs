@@ -5,7 +5,7 @@ Compares the expected ROI label (from the Brodmann template) to the
 subject-specific ROI label (from scanner MNI projection) for each optode
 and produces a per-subject report of (a) total label switches and
 (b) switches that remain within the inferior parietal lobule (e.g.
-Angular Gyrus → Supramarginal Gyrus). Used as a registration QC step.
+Angular Gyrus -> Supramarginal Gyrus). Used as a registration QC step.
 
 Author: Sudan Duwadi <sudan@bu.edu>
 Notes: Code refactoring, documentation, and commenting were AI-assisted;
@@ -17,6 +17,11 @@ import pandas as pd
 from pathlib import Path
 from typing import List, Dict, Tuple
 from collections import defaultdict
+
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root")
 
 # CONFIGURATION - MODIFY THESE
 
@@ -36,10 +41,7 @@ SUBJECT_IDS = [
 ]
 
 # Base directory for data
-BASE_DIR = Path(
-    r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects"
-    r"\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-)
+BASE_DIR = _PATHS.raw_root
 
 # Output directory
 OUTPUT_DIR = BASE_DIR / "derivatives" / "mni_label_switch_report"

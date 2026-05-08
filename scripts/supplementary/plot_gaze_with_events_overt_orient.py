@@ -19,6 +19,11 @@ import matplotlib
 matplotlib.use("Agg")  # non-interactive backend for batch plotting
 import matplotlib.pyplot as plt
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "derivatives_root")
+
 # CONFIGURATION
 
 #%% SUBJECT LIST -- edit this list to process different subjects
@@ -36,10 +41,10 @@ RUNS = [
 ]
 #%%
 # BASE DIRECTORY (where sub-XX/nirs/ folders live)
-DATA_BASE = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
+DATA_BASE = str(_PATHS.raw_root)
 
-# OUTPUT DIRECTORY FOR PLOTS
-OUT_DIR = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data\derivatives\eye_tracking"
+# OUTPUT DIRECTORY FOR PLOTS (sibling of derivatives_root under <raw_root>/derivatives)
+OUT_DIR = str(_PATHS.derivatives_root.parent / "eye_tracking")
 
 # PLOTTING FUNCTION
 

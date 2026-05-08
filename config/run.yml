@@ -1,0 +1,30 @@
+# config/run.yml
+#
+# Run knobs for the wholehead-cocktail-party publication code.
+# Edit these values once. Every script reads them at startup so you do not
+# need to open any .py file to switch conditions or pipeline modes.
+#
+# After editing, you can verify with:
+#   python -c "from wholehead_cocktail_party.run_config import load_run_config; print(load_run_config())"
+
+# Condition to analyse: 'overt' or 'covert'. Both are wired and produce the
+# corresponding paper figures.
+condition: overt
+
+# Where to start the pipeline.
+#   full              = raw NIRS -> preprocess -> classify -> figures (slowest, most reproducible)
+#   from-derivatives  = skip preprocessing, use shipped or previously-saved pickles
+#   from-classifier   = skip classification, plot from shipped CSV/JSON (not yet wired)
+#
+# Switch between 'full' (process from scratch) and 'from-derivatives' (reuse
+# saved preprocessed data) without opening any .py file.
+mode: full
+
+# Which subjects to process.
+#   all              = the paper cohort baked into each script (typical reviewer)
+#   test             = a single subject (sub-10) for quick smoke testing
+#   list of strings  = explicit IDs, e.g. ['01', '10', '20']
+#
+# 'test' is intended for verifying the pipeline runs end-to-end without
+# committing to a multi-hour cohort run.
+subjects: all

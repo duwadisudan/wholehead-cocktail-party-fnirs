@@ -6,8 +6,8 @@ Angular Gyrus activation reliability vs overt accuracy (supplementary).
 Loads per-subject trial-level activation reliability outputs from the
 trial-SNR computation, restricts to Angular Gyrus channels (left + right
 pooled), and correlates the subject mean AG activation reliability against
-overt RF decoding accuracy. Activation Reliability is defined as |μ|/σ where
-μ is the mean HbO response across trials and σ is the across-trial SD.
+overt RF decoding accuracy. Activation Reliability is defined as |mu|/sigma where
+mu is the mean HbO response across trials and sigma is the across-trial SD.
 The all-channels variant is plotted alongside for reference.
 
 Author: Sudan Duwadi <sudan@bu.edu>
@@ -19,6 +19,17 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 
 import sys
 from whichscript import enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require
+from wholehead_cocktail_party.run_config import load_run_config, require_run, resolve_subjects
+
+_PATHS = load_paths()
+require(_PATHS, "derivatives_root", "classifier_results_root", "roi_csv")
+
+_RUN = load_run_config()
+require_run(_RUN, supported_conditions={"overt", "covert"}, supported_modes={"full", "from-derivatives"})
+
+# Cohort of subjects with both overt and covert runs. Override via run.yml.
+_DEFAULT_COHORT = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
 
 enable_auto_logging()
 #%%
@@ -34,28 +45,21 @@ from scipy.stats import pearsonr
 warnings.filterwarnings("ignore")
 
 # ------------------------------------------------------------------ CONFIG
-SUBJECTS = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22','25','28','30','31','32','33','34','35','39','41','44','47']
-RUN_TYPE = 'overt'
-
-PROJECT_ROOT = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party"
+SUBJECTS = resolve_subjects(_RUN, _DEFAULT_COHORT)
+RUN_TYPE = _RUN.condition  # from config/run.yml
 
 # SNR results directory
-SNR_DIR = os.path.join(PROJECT_ROOT,
-                       "Cocktail_party_whole_head_master_data",
-                       "derivatives", "processed_data",
-                       f"trial_snr_{RUN_TYPE}")
+SNR_DIR = str(_PATHS.derivatives_root / f"trial_snr_{RUN_TYPE}")
 
 # Classification results directory (for accuracy data)
-CLASSIFIER_DIR = os.path.join(PROJECT_ROOT,
-                              "Classifier_script_results", "nested",
-                              "rf_snr_0_20feat_balanced_depth5_oob")
+CLASSIFIER_DIR = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
 
 # Accuracy CSV
 ACC_CSV = os.path.join(CLASSIFIER_DIR, "final_table.csv")
 ACC_COL = "Overt_perc"
 
 # ROI mapping
-ROI_MAP_CSV = os.path.join(PROJECT_ROOT, "ROIs", "roi_master.csv")
+ROI_MAP_CSV = str(_PATHS.roi_csv)
 
 # Output directory
 OUT_DIR = CLASSIFIER_DIR
@@ -273,7 +277,7 @@ ax1.scatter(analysis_df_ag_snr['ag_snr_mean'], analysis_df_ag_snr['accuracy'],
 for sid, row in analysis_df_ag_snr.iterrows():
     ax1.annotate(f"{int(sid):02d}", (row['ag_snr_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax1.set_xlabel('Mean Angular Gyrus Activation Reliability (|μ|/σ)', fontsize=10)
+ax1.set_xlabel('Mean Angular Gyrus Activation Reliability (|mu|/sigma)', fontsize=10)
 ax1.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title1 = 'AG: Activation Reliability vs Accuracy'
 if not np.isnan(r_ag_snr):
@@ -295,7 +299,7 @@ ax2.scatter(analysis_df_ag_abs['ag_abs_mean'], analysis_df_ag_abs['accuracy'],
 for sid, row in analysis_df_ag_abs.iterrows():
     ax2.annotate(f"{int(sid):02d}", (row['ag_abs_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax2.set_xlabel('Mean Angular Gyrus |Amplitude| (μM)', fontsize=10)
+ax2.set_xlabel('Mean Angular Gyrus |Amplitude| (muM)', fontsize=10)
 ax2.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title2 = 'AG: Amplitude vs Accuracy'
 if not np.isnan(r_ag_abs):
@@ -317,7 +321,7 @@ ax3.scatter(analysis_df_ag_std['ag_std_mean'], analysis_df_ag_std['accuracy'],
 for sid, row in analysis_df_ag_std.iterrows():
     ax3.annotate(f"{int(sid):02d}", (row['ag_std_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax3.set_xlabel('Mean Angular Gyrus Std (σ)', fontsize=10)
+ax3.set_xlabel('Mean Angular Gyrus Std (sigma)', fontsize=10)
 ax3.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title3 = 'AG: Variability vs Accuracy'
 if not np.isnan(r_ag_std):
@@ -351,7 +355,7 @@ ax1.scatter(analysis_df_all_snr['all_ch_snr_mean'], analysis_df_all_snr['accurac
 for sid, row in analysis_df_all_snr.iterrows():
     ax1.annotate(f"{int(sid):02d}", (row['all_ch_snr_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax1.set_xlabel('Mean All-Channels Activation Reliability (|μ|/σ)', fontsize=10)
+ax1.set_xlabel('Mean All-Channels Activation Reliability (|mu|/sigma)', fontsize=10)
 ax1.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title1 = 'All Channels: Activation Reliability vs Accuracy'
 if not np.isnan(r_all_snr):
@@ -373,7 +377,7 @@ ax2.scatter(analysis_df_all_abs['all_ch_abs_mean'], analysis_df_all_abs['accurac
 for sid, row in analysis_df_all_abs.iterrows():
     ax2.annotate(f"{int(sid):02d}", (row['all_ch_abs_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax2.set_xlabel('Mean All-Channels |Amplitude| (μM)', fontsize=10)
+ax2.set_xlabel('Mean All-Channels |Amplitude| (muM)', fontsize=10)
 ax2.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title2 = 'All Channels: Amplitude vs Accuracy'
 if not np.isnan(r_all_abs):
@@ -395,7 +399,7 @@ ax3.scatter(analysis_df_all_std['all_ch_std_mean'], analysis_df_all_std['accurac
 for sid, row in analysis_df_all_std.iterrows():
     ax3.annotate(f"{int(sid):02d}", (row['all_ch_std_mean'], row['accuracy']), 
                 xytext=(4, 4), textcoords='offset points', fontsize=8)
-ax3.set_xlabel('Mean All-Channels Std (σ)', fontsize=10)
+ax3.set_xlabel('Mean All-Channels Std (sigma)', fontsize=10)
 ax3.set_ylabel('Overt Accuracy (%)', fontsize=10)
 title3 = 'All Channels: Variability vs Accuracy'
 if not np.isnan(r_all_std):
@@ -570,7 +574,7 @@ _draw_reliability_panel(
     subj_ids=_df_a.index.values,
     color=_COLOR_ALL,
     panel_letter='A',
-    xlabel='All-Channels Activation Reliability (|μ|/σ)',
+    xlabel='All-Channels Activation Reliability (|mu|/sigma)',
     r_val=r_all_snr,
     p_val=p_all_snr,
 )
@@ -584,7 +588,7 @@ _draw_reliability_panel(
     subj_ids=_df_b.index.values,
     color=_COLOR_AG,
     panel_letter='B',
-    xlabel='Angular Gyrus Activation Reliability (|μ|/σ)',
+    xlabel='Angular Gyrus Activation Reliability (|mu|/sigma)',
     r_val=r_ag_snr,
     p_val=p_ag_snr,
 )

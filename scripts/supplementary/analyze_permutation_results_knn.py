@@ -18,6 +18,11 @@ import matplotlib.pyplot as plt
 import os
 from scipy import stats
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "derivatives_root")
+
 def load_permutation_results(filepath):
     """Load permutation test results from pickle file."""
     with open(filepath, 'rb') as f:
@@ -46,12 +51,12 @@ def calculate_significance_bounds(permutation_accuracies, alpha=0.05):
     n_perms = len(sorted_acc)
     
     # Calculate confidence intervals
-    lower_bound = np.percentile(sorted_acc, (alpha/2) * 100)     # 2.5th percentile for α=0.05
-    upper_bound = np.percentile(sorted_acc, (1 - alpha/2) * 100) # 97.5th percentile for α=0.05
+    lower_bound = np.percentile(sorted_acc, (alpha/2) * 100)     # 2.5th percentile for alpha=0.05
+    upper_bound = np.percentile(sorted_acc, (1 - alpha/2) * 100) # 97.5th percentile for alpha=0.05
     
     # One-tailed bounds (more common for classification)
-    upper_bound_one_tail = np.percentile(sorted_acc, (1 - alpha) * 100)  # 95th percentile for α=0.05
-    lower_bound_one_tail = np.percentile(sorted_acc, alpha * 100)         # 5th percentile for α=0.05
+    upper_bound_one_tail = np.percentile(sorted_acc, (1 - alpha) * 100)  # 95th percentile for alpha=0.05
+    lower_bound_one_tail = np.percentile(sorted_acc, alpha * 100)         # 5th percentile for alpha=0.05
     
     # Calculate mean and standard deviation
     mean_acc = np.mean(sorted_acc)
@@ -74,7 +79,7 @@ def calculate_significance_bounds(permutation_accuracies, alpha=0.05):
         'std': std_acc,
         'median': np.median(sorted_acc),
         
-        # Two-tailed bounds (α/2 in each tail)
+        # Two-tailed bounds (alpha/2 in each tail)
         'two_tailed': {
             'lower_bound': lower_bound,
             'upper_bound': upper_bound,
@@ -82,7 +87,7 @@ def calculate_significance_bounds(permutation_accuracies, alpha=0.05):
             'upper_percentile': (1 - alpha/2) * 100
         },
         
-        # One-tailed bounds (α in one tail)
+        # One-tailed bounds (alpha in one tail)
         'one_tailed': {
             'lower_bound': lower_bound_one_tail,
             'upper_bound': upper_bound_one_tail,
@@ -285,7 +290,7 @@ def main():
     """Main analysis function."""
     
     # File path to permutation results
-    results_file = "U:\\eng_research_hrc_binauralhearinglab\\Sudan\\Labs\\Sen Lab\\Research_projects\\Whole_Head_Cocktail_party\\Cocktail_party_whole_head_master_data\\derivatives\\processed_data\\permutation_test_subject10_baseline_1000perms.pkl"
+    results_file = str(_PATHS.derivatives_root / "permutation_test_subject10_baseline_1000perms.pkl")
     
     print(" PERMUTATION TEST RESULTS ANALYSIS")
     print("="*50)
@@ -311,23 +316,23 @@ def main():
     for alpha in alpha_levels:
         bounds = calculate_significance_bounds(permutation_accuracies, alpha=alpha)
         
-        print(f"\n Significance level α = {alpha}")
+        print(f"\n Significance level alpha = {alpha}")
         print(f"   Mean chance level: {bounds['mean']:.4f} ± {bounds['std']:.4f}")
         print(f"   Two-tailed {(1-alpha)*100:.0f}% CI: [{bounds['two_tailed']['lower_bound']:.4f}, {bounds['two_tailed']['upper_bound']:.4f}]")
         print(f"   One-tailed bounds: Lower {alpha*100:.0f}% = {bounds['one_tailed']['lower_bound']:.4f}, Upper {(1-alpha)*100:.0f}% = {bounds['one_tailed']['upper_bound']:.4f}")
         
-        # For α=0.05, create detailed analysis
+        # For alpha=0.05, create detailed analysis
         if alpha == 0.05:
             main_bounds = bounds
     
-    print(f"\n INTERPRETATION FOR α = 0.05:")
+    print(f"\n INTERPRETATION FOR alpha = 0.05:")
     print("-" * 50)
     print(f"• Any observed accuracy > {main_bounds['one_tailed']['upper_bound']:.4f} is significantly BETTER than chance (p < 0.05)")
     print(f"• Any observed accuracy < {main_bounds['one_tailed']['lower_bound']:.4f} is significantly WORSE than chance (p < 0.05)")
     print(f"• Accuracies between {main_bounds['one_tailed']['lower_bound']:.4f} and {main_bounds['one_tailed']['upper_bound']:.4f} are NOT significantly different from chance")
     
     # Example: Test a hypothetical observed accuracy
-    print(f"\n🧪 EXAMPLE: Testing hypothetical observed accuracies")
+    print(f"\n EXAMPLE: Testing hypothetical observed accuracies")
     print("-" * 50)
     
     test_accuracies = [0.55, 0.60, 0.65, 0.70, 0.75]

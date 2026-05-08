@@ -15,11 +15,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 #%%
 import sys
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "classifier_results_root")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -65,8 +69,8 @@ def create_time_axis(n_points, sampling_rate=8.98, start_time=-2.0):
     
     Based on your analysis code:
     - t_rel goes from -2s to +10s 
-    - window_size = int(round(1.0 * fs)) ≈ 9 samples
-    - step_size = int(round(0.5 * fs)) ≈ 4.5 samples  
+    - window_size = int(round(1.0 * fs)) ~= 9 samples
+    - step_size = int(round(0.5 * fs)) ~= 4.5 samples  
     - n_windows = (T - window_size) // step_size + 1
     
     The sliding window centers are calculated as:
@@ -74,8 +78,8 @@ def create_time_axis(n_points, sampling_rate=8.98, start_time=-2.0):
     """
     # Match your analysis exactly
     fs = sampling_rate
-    window_size_samples = int(round(1.0 * fs))  # ≈ 9 samples
-    step_size_samples = int(round(0.5 * fs))    # ≈ 4 samples (rounded down)
+    window_size_samples = int(round(1.0 * fs))  # ~= 9 samples
+    step_size_samples = int(round(0.5 * fs))    # ~= 4 samples (rounded down)
     
     # Your t_rel spans from -2s to +15s
     total_duration = 12.0  # seconds  (-2 to +15)
@@ -154,7 +158,7 @@ def plot_accuracy_over_time(data, output_path, title="Accuracy Over Time for 1 C
         'xtick.major.size':     3,
         'ytick.major.size':     3,
     })
-    # Half-column width: table_maker figsize=(7,10) → 88 mm → 3.5 in = 44 mm (half column)
+    # Half-column width: table_maker figsize=(7,10) -> 88 mm -> 3.5 in = 44 mm (half column)
     fig, ax = plt.subplots(figsize=(3.5, 2.5))
     
     # Convert to percentage
@@ -294,7 +298,7 @@ def main():
 def plot_from_json_file():
     """Load and plot from the specific JSON file provided by user."""
     
-    json_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob\sub_10_overt\summary_accuracy.json"
+    json_path = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob" / "sub_10_overt" / "summary_accuracy.json")
     
     try:
         # Load data from JSON file

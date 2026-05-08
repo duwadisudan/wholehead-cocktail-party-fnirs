@@ -13,11 +13,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 """
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "classifier_results_root")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -39,8 +43,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # File paths
-file1_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob\final_table.csv"
-file2_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_LR_ang_gyr_snr_0_20feat_balanced_depth5_oob\final_table.csv"
+file1_path = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob" / "final_table.csv")
+file2_path = str(_PATHS.classifier_results_root / "nested" / "rf_LR_ang_gyr_snr_0_20feat_balanced_depth5_oob" / "final_table.csv")
 
 def load_and_clean_data(file_path, condition_name):
     """Load and clean the CSV data"""
@@ -349,7 +353,7 @@ def main():
     fig = create_visualization(df1, df2, pairwise_results, condition1_name, condition2_name)
     
     # Create output directory if it doesn't exist
-    output_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\stats_allch_vs_LR_ang_gyr_snr_0_20feat"
+    output_dir = str(_PATHS.classifier_results_root / "nested" / "stats_allch_vs_LR_ang_gyr_snr_0_20feat")
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     # Save the plot in three formats (PDF, SVG, PNG)

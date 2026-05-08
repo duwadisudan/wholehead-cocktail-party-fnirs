@@ -17,11 +17,15 @@ Notes: Code refactoring, documentation, and commenting were AI-assisted;
 
 #%%
 from whichscript import configure, enable_auto_logging
+from wholehead_cocktail_party.paths import load_paths, require, whichscript_archive_dir
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root", "classifier_results_root", "roi_csv")
 
 configure(
     archive=True,
     archive_only=False,
-    archive_dir=r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\whichscript_archive",
+    archive_dir=str(whichscript_archive_dir(_PATHS)),
     hide_sidecars=True,
     metadata=False,
     snapshot_script=False,
@@ -365,7 +369,7 @@ def plot_channel_contributions_scalp(contrib_da, rec, subject_id, condition, out
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         print(f" Saved: {output_file}")
     plt.close()
-    print(f"  Max contribution (raw): {raw_max:.2f}%  →  vmax set to {vmax_contrib}")
+    print(f"  Max contribution (raw): {raw_max:.2f}%  ->  vmax set to {vmax_contrib}")
 
 
 # ROI helper functions (from analyze_pc_contributions_group_roi.py)
@@ -577,7 +581,7 @@ def plot_group_roi_contributions_scalp(roi_group_df: pd.DataFrame, rec, conditio
     )
     axes[1].set_title('')
 
-    # Colorbar fonts at 2× final size (14pt label → 7pt at 88mm, 12pt ticks → 6pt at 88mm)
+    # Colorbar fonts at 2× final size (14pt label -> 7pt at 88mm, 12pt ticks -> 6pt at 88mm)
     # Also explicitly set ticks so top tick == vmax (guaranteed, even if step rounding
     # left a gap due to floating-point or unusual vmax values).
     plot_axes = set(np.ravel(axes))
@@ -601,7 +605,7 @@ def plot_group_roi_contributions_scalp(roi_group_df: pd.DataFrame, rec, conditio
         plt.savefig(output_file, dpi=300, bbox_inches='tight')
         print(f" Saved group plot: {output_file}")
     plt.close()
-    print(f"  Max ROI contribution (raw): {raw_max_contrib:.2f}%  →  vmax set to {vmax_contrib}")
+    print(f"  Max ROI contribution (raw): {raw_max_contrib:.2f}%  ->  vmax set to {vmax_contrib}")
     print(f"  ROIs plotted: {len(roi_group_df)}")
 
 
@@ -610,13 +614,13 @@ def main():
     """Main function to generate scalp plots for all subjects and conditions."""
     
     # Configuration
-    base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob"
-    master_data_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-    output_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_scalp_plots"
-    roi_csv_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv"
-    
+    base_dir = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
+    master_data_dir = str(_PATHS.raw_root)
+    output_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_scalp_plots")
+    roi_csv_path = str(_PATHS.roi_csv)
+
     # Path to group-level ROI analysis results (from analyze_pc_contributions_group_roi.py)
-    group_roi_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_group_roi_contributions"
+    group_roi_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_group_roi_contributions")
     
     subjects = ['01','02','03','04','05','10','11','12','13','14','15','18','20','22',
                 '25','28','30','31','32','33','34','35','39','41','44','47']
@@ -740,10 +744,10 @@ if __name__ == '__main__':
         print("TEST MODE: Running single subject")
         print("="*80)
         
-        base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\nested\rf_snr_0_20feat_balanced_depth5_oob"
-        master_data_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-        output_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_scalp_plots"
-        
+        base_dir = str(_PATHS.classifier_results_root / "nested" / "rf_snr_0_20feat_balanced_depth5_oob")
+        master_data_dir = str(_PATHS.raw_root)
+        output_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_scalp_plots")
+
         subject_id = '01'
         condition = 'overt'
         
@@ -788,10 +792,10 @@ if __name__ == '__main__':
         print("TEST MODE: Group-level plot only")
         print("="*80)
         
-        master_data_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data"
-        output_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_scalp_plots"
-        roi_csv_path = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\ROIs\roi_master.csv"
-        group_roi_base_dir = r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Classifier_script_results\RF_above_chance_group_roi_contributions"
+        master_data_dir = str(_PATHS.raw_root)
+        output_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_scalp_plots")
+        roi_csv_path = str(_PATHS.roi_csv)
+        group_roi_base_dir = str(_PATHS.classifier_results_root / "RF_above_chance_group_roi_contributions")
 
         ref_subject = '01'
         condition = 'overt'

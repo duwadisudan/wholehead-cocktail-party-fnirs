@@ -18,10 +18,15 @@ import sys
 from pathlib import Path
 from typing import Iterable, List, Sequence
 
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root")
+
 # CHANGE THIS FOR EACH SUBJECT
 SUBJECT_ID = "sub-663"
 
-BASE_DIR = Path(r"U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab\Research_projects\Whole_Head_Cocktail_party\Cocktail_party_whole_head_master_data")
+BASE_DIR = _PATHS.raw_root
 DEFAULT_SOURCE = BASE_DIR / SUBJECT_ID / "nirs" / "atlasviewer_mni" / "atlasviewer_cortex_projected_mni_scanner.csv"
 
 

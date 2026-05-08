@@ -15,6 +15,12 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+from wholehead_cocktail_party.paths import load_paths, require
+
+_PATHS = load_paths()
+require(_PATHS, "raw_root")
+
 # ——— setup ———
 subjects = [
     '01', '02', '03', '04', '05', '10', '11', '12', '13', '14',
@@ -23,10 +29,9 @@ subjects = [
 ]
 tasks = ['overt', 'covert']
 
-base_dir = (
-    r'U:\eng_research_hrc_binauralhearinglab\Sudan\Labs\Sen Lab'
-    r'\Research_projects\Whole_Head_Cocktail_party\Response_data'
-)
+# Behavioral response CSVs ship as a sibling of the BIDS data tree in the
+# original lab layout (Whole_Head_Cocktail_party/Response_data).
+base_dir = str(_PATHS.raw_root.parent / "Response_data")
 
 percent_correct = np.full((len(subjects), len(tasks)), np.nan)
 n_incorrect = np.full((len(subjects), len(tasks)), np.nan)
