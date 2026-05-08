@@ -31,6 +31,11 @@ version-file = "src/cedalion/_version.py"
 
 [tool.hatch.version]
 source = "vcs"
+# The vendored cedalion in this repo intentionally has no .git/ (it is a
+# frozen snapshot, see CLAUDE.md). Without git, hatch-vcs cannot determine
+# a version and `pip install -e ./cedalion` fails. fallback-version unblocks
+# that path so reviewers do not need an env-var workaround.
+fallback-version = "0.0.0+vendored"
 
 [tool.hatch.env]
 requires = [
